@@ -1,0 +1,1191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>WorkoutPro</title>
+  <!-- PWA -->
+  <link rel="manifest" href="manifest.json" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="WorkoutPro" />
+  <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20512%20512%22%3E%20%3Crect%20width%3D%22512%22%20height%3D%22512%22%20rx%3D%2296%22%20fill%3D%22%231a1a24%22%2F%3E%20%3Crect%20x%3D%2260%22%20y%3D%22230%22%20width%3D%22392%22%20height%3D%2252%22%20rx%3D%2226%22%20fill%3D%22%236c63ff%22%2F%3E%20%3Crect%20x%3D%2252%22%20y%3D%22180%22%20width%3D%2240%22%20height%3D%22152%22%20rx%3D%2220%22%20fill%3D%22%236c63ff%22%2F%3E%20%3Crect%20x%3D%2220%22%20y%3D%22206%22%20width%3D%2238%22%20height%3D%22100%22%20rx%3D%2219%22%20fill%3D%22%23a09aff%22%2F%3E%20%3Crect%20x%3D%22420%22%20y%3D%22180%22%20width%3D%2240%22%20height%3D%22152%22%20rx%3D%2220%22%20fill%3D%22%236c63ff%22%2F%3E%20%3Crect%20x%3D%22454%22%20y%3D%22206%22%20width%3D%2238%22%20height%3D%22100%22%20rx%3D%2219%22%20fill%3D%22%23a09aff%22%2F%3E%20%3Crect%20x%3D%22188%22%20y%3D%22218%22%20width%3D%22136%22%20height%3D%2276%22%20rx%3D%2220%22%20fill%3D%22%238b85ff%22%2F%3E%20%3C%2Fsvg%3E" />
+  <meta name="theme-color" content="#6c63ff" />
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0f0f13;
+      --surface: #1a1a24;
+      --surface2: #22222f;
+      --accent: #6c63ff;
+      --accent2: #ff6584;
+      --text: #e8e8f0;
+      --muted: #7a7a99;
+      --border: #2e2e44;
+      --success: #4caf88;
+      --radius: 12px;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    /* ── Header ── */
+    header {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 18px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    header h1 { font-size: 1.4rem; font-weight: 700; letter-spacing: -0.3px; }
+    header h1 span { color: var(--accent); }
+    .header-actions { display: flex; gap: 10px; }
+
+    /* ── Buttons ── */
+    button {
+      cursor: pointer;
+      border: none;
+      border-radius: 8px;
+      font-size: 0.875rem;
+      font-weight: 600;
+      transition: opacity 0.15s, transform 0.1s;
+    }
+    button:active { transform: scale(0.97); }
+    .btn-primary {
+      background: var(--accent);
+      color: #fff;
+      padding: 9px 18px;
+    }
+    .btn-primary:hover { opacity: 0.88; }
+    .btn-danger {
+      background: transparent;
+      color: var(--accent2);
+      border: 1px solid var(--accent2);
+      padding: 5px 12px;
+      font-size: 0.8rem;
+    }
+    .btn-danger:hover { background: rgba(255,101,132,0.1); }
+    .btn-ghost {
+      background: var(--surface2);
+      color: var(--text);
+      padding: 8px 16px;
+      border: 1px solid var(--border);
+    }
+    .btn-ghost:hover { background: var(--border); }
+    .btn-icon {
+      background: none;
+      color: var(--muted);
+      padding: 4px 8px;
+      font-size: 1rem;
+      border-radius: 6px;
+    }
+    .btn-icon:hover { color: var(--text); background: var(--surface2); }
+    .btn-small {
+      background: var(--accent);
+      color: #fff;
+      padding: 6px 14px;
+      font-size: 0.8rem;
+      border-radius: 7px;
+    }
+    .btn-success {
+      background: var(--success);
+      color: #fff;
+      padding: 7px 16px;
+      font-size: 0.85rem;
+    }
+
+    /* ── Layout ── */
+    main { max-width: 960px; margin: 0 auto; padding: 28px 20px 60px; }
+
+    /* ── View Tabs ── */
+    .tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 28px;
+    }
+    .tab {
+      padding: 8px 20px;
+      border-radius: 99px;
+      font-size: 0.875rem;
+      font-weight: 600;
+      cursor: pointer;
+      border: 1px solid var(--border);
+      background: transparent;
+      color: var(--muted);
+      transition: all 0.15s;
+    }
+    .tab.active {
+      background: var(--accent);
+      color: #fff;
+      border-color: var(--accent);
+    }
+
+    /* ── View Sections ── */
+    .view { display: none; }
+    .view.active { display: block; }
+
+    /* ── Workout Cards ── */
+    .workout-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 16px;
+    }
+    .workout-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+      cursor: pointer;
+      transition: border-color 0.15s, transform 0.1s;
+      position: relative;
+    }
+    .workout-card:hover { border-color: var(--accent); transform: translateY(-2px); }
+    .workout-card.active-card { border-color: var(--accent); background: #1e1e30; }
+    .card-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 12px; }
+    .card-title { font-size: 1.1rem; font-weight: 700; }
+    .card-tag {
+      font-size: 0.72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      padding: 3px 9px;
+      border-radius: 99px;
+    }
+    .tag-push  { background: rgba(108,99,255,0.18); color: #a09aff; }
+    .tag-pull  { background: rgba(255,101,132,0.18); color: #ff8fa5; }
+    .tag-legs  { background: rgba(76,175,136,0.18); color: #6ed4b0; }
+    .tag-full  { background: rgba(255,193,7,0.18);  color: #ffd54f; }
+    .tag-cardio{ background: rgba(33,150,243,0.18); color: #64b5f6; }
+    .tag-other { background: rgba(120,120,140,0.18);color: #b0b0c8; }
+
+    .card-exercises {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      margin-top: 10px;
+    }
+    .card-exercise-pill {
+      font-size: 0.82rem;
+      color: var(--muted);
+      background: var(--surface2);
+      padding: 4px 10px;
+      border-radius: 6px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .more-badge {
+      font-size: 0.78rem;
+      color: var(--accent);
+      font-weight: 600;
+      margin-top: 4px;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+      color: var(--muted);
+    }
+    .empty-state .icon { font-size: 3rem; margin-bottom: 16px; opacity: 0.5; }
+    .empty-state p { font-size: 1rem; margin-bottom: 20px; }
+
+    /* ── Detail View ── */
+    .detail-header {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 24px;
+    }
+    .detail-title { font-size: 1.6rem; font-weight: 800; }
+    .detail-actions { display: flex; gap: 8px; margin-left: auto; align-items: center; }
+
+    /* ── Exercise Table ── */
+    .exercise-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 20px;
+    }
+    .exercise-table th {
+      text-align: left;
+      font-size: 0.78rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--muted);
+      padding: 10px 14px;
+      border-bottom: 1px solid var(--border);
+    }
+    .exercise-table td {
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--border);
+      font-size: 0.92rem;
+    }
+    .exercise-table tr:last-child td { border-bottom: none; }
+    .exercise-table tr:hover td { background: var(--surface2); }
+    .exercise-name { font-weight: 600; }
+    .exercise-notes { font-size: 0.8rem; color: var(--muted); margin-top: 2px; }
+    .done-check {
+      width: 22px; height: 22px;
+      border-radius: 6px;
+      border: 2px solid var(--border);
+      background: transparent;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.15s;
+      font-size: 0.85rem;
+    }
+    .done-check.checked { background: var(--success); border-color: var(--success); }
+    .done-row td { opacity: 0.45; }
+    .done-row .exercise-name { text-decoration: line-through; }
+
+    /* ── Modals ── */
+    .overlay {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.65);
+      backdrop-filter: blur(4px);
+      z-index: 200;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .overlay.hidden { display: none; }
+    .modal {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 28px;
+      width: 100%;
+      max-width: 480px;
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+    .modal h2 { font-size: 1.25rem; font-weight: 700; margin-bottom: 20px; }
+
+    /* ── Forms ── */
+    .form-group { margin-bottom: 16px; }
+    label { display: block; font-size: 0.82rem; font-weight: 600; color: var(--muted); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.3px; }
+    input[type=text], input[type=number], select, textarea {
+      width: 100%;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      padding: 10px 14px;
+      font-size: 0.92rem;
+      outline: none;
+      transition: border-color 0.15s;
+      font-family: inherit;
+    }
+    input:focus, select:focus, textarea:focus { border-color: var(--accent); }
+    select option { background: var(--surface2); }
+    textarea { resize: vertical; min-height: 70px; }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+    .form-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 24px; }
+
+    /* ── Log View ── */
+    .log-day {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      margin-bottom: 14px;
+      overflow: hidden;
+    }
+    .log-day-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 18px;
+      cursor: pointer;
+      user-select: none;
+    }
+    .log-day-header:hover { background: var(--surface2); }
+    .log-date { font-weight: 700; font-size: 0.95rem; }
+    .log-name { font-size: 0.85rem; color: var(--accent); font-weight: 600; }
+    .log-summary { font-size: 0.8rem; color: var(--muted); }
+    .log-body { display: none; padding: 0 18px 16px; }
+    .log-body.open { display: block; }
+    .log-exercise-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 0.88rem;
+    }
+    .log-exercise-row:last-child { border-bottom: none; }
+    .log-ex-name { font-weight: 600; flex: 1; }
+    .log-ex-detail { color: var(--muted); white-space: nowrap; }
+
+    /* ── Today Banner ── */
+    .today-banner {
+      background: linear-gradient(135deg, rgba(108,99,255,0.15), rgba(255,101,132,0.1));
+      border: 1px solid rgba(108,99,255,0.3);
+      border-radius: var(--radius);
+      padding: 20px 24px;
+      margin-bottom: 28px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    .today-banner .icon { font-size: 2rem; }
+    .today-banner h2 { font-size: 1rem; font-weight: 700; color: var(--accent); margin-bottom: 2px; }
+    .today-banner p { font-size: 0.88rem; color: var(--muted); }
+
+    /* ── Progress bar ── */
+    .progress-bar-wrap { display: flex; align-items: center; gap: 10px; margin-top: 12px; }
+    .progress-bar {
+      flex: 1;
+      height: 6px;
+      background: var(--surface2);
+      border-radius: 99px;
+      overflow: hidden;
+    }
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--accent), var(--accent2));
+      border-radius: 99px;
+      transition: width 0.3s ease;
+    }
+    .progress-pct { font-size: 0.82rem; font-weight: 700; color: var(--accent); width: 36px; text-align: right; }
+
+    /* ── AI Result Cards ── */
+    .ai-day-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      margin-bottom: 14px;
+      overflow: hidden;
+    }
+    .ai-day-header {
+      padding: 14px 18px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      border-bottom: 1px solid var(--border);
+      background: var(--surface2);
+    }
+    .ai-day-name { font-weight: 800; font-size: 1rem; }
+    .ai-day-body { padding: 10px 18px 14px; }
+    .ai-exercise-row {
+      padding: 8px 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 0.88rem;
+      display: grid;
+      grid-template-columns: 1fr auto auto auto;
+      gap: 12px;
+      align-items: center;
+    }
+    .ai-exercise-row:last-child { border-bottom: none; }
+    .ai-ex-name { font-weight: 600; }
+    .ai-ex-meta { color: var(--muted); white-space: nowrap; }
+
+    /* ── Schedule Strip ── */
+    .schedule-strip {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 28px;
+      overflow-x: auto;
+      padding-bottom: 6px;
+    }
+    .sched-day {
+      flex: 0 0 auto;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px 16px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.15s;
+      min-width: 72px;
+    }
+    .sched-day:hover { border-color: var(--accent); }
+    .sched-day.has-workout { border-color: rgba(108,99,255,0.5); background: rgba(108,99,255,0.08); }
+    .sched-day.today-day { border-color: var(--accent); background: rgba(108,99,255,0.15); }
+    .sched-day-label { font-size: 0.72rem; font-weight: 700; text-transform: uppercase; color: var(--muted); }
+    .sched-day-num { font-size: 1.3rem; font-weight: 800; margin: 2px 0; }
+    .sched-day-workout { font-size: 0.7rem; color: var(--accent); font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 68px; }
+
+    /* ── Responsive ── */
+    @media(max-width: 540px) {
+      .form-row { grid-template-columns: 1fr 1fr; }
+      .exercise-table th:nth-child(5),
+      .exercise-table td:nth-child(5) { display: none; }
+      .ai-exercise-row { grid-template-columns: 1fr auto; }
+      .ai-ex-meta.hide-mobile { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>💪 Workout<span>Pro</span></h1>
+  <div class="header-actions">
+    <button class="btn-primary" id="btn-add-workout">+ New Workout</button>
+  </div>
+</header>
+
+<main>
+  <!-- Install Banner (shown on first visit in browser) -->
+  <div id="install-banner" class="today-banner hidden" style="margin-bottom:20px;cursor:pointer" onclick="triggerInstall()">
+    <div class="icon">📲</div>
+    <div>
+      <h2>Add to Home Screen</h2>
+      <p>Tap here to install WorkoutPro as an app — works offline too!</p>
+    </div>
+    <button class="btn-icon" style="margin-left:auto;font-size:1.2rem" onclick="event.stopPropagation();hideBanner()">✕</button>
+  </div>
+
+  <!-- Tabs -->
+  <div class="tabs">
+    <button class="tab active" data-tab="workouts">My Workouts</button>
+    <button class="tab" data-tab="log">History Log</button>
+    <button class="tab" data-tab="ai">✨ AI Plan</button>
+  </div>
+
+  <!-- ══ WORKOUTS VIEW ══ -->
+  <div class="view active" id="view-workouts">
+    <!-- Weekly Schedule Strip -->
+    <div id="schedule-section">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+        <div style="font-size:0.82rem;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--muted)">This Week</div>
+        <button class="btn-ghost" style="font-size:0.78rem;padding:5px 12px" id="btn-edit-schedule">Edit Schedule</button>
+      </div>
+      <div class="schedule-strip" id="schedule-strip"></div>
+    </div>
+    <div style="font-size:0.82rem;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--muted);margin-bottom:12px">All Workouts</div>
+    <div class="workout-grid" id="workout-grid"></div>
+    <div class="empty-state hidden" id="empty-workouts">
+      <div class="icon">🏋️</div>
+      <p>No workouts yet. Create your first one!</p>
+      <button class="btn-primary" onclick="openAddWorkout()">+ New Workout</button>
+    </div>
+  </div>
+
+  <!-- ══ DETAIL VIEW ══ -->
+  <div class="view" id="view-detail">
+    <div class="detail-header">
+      <button class="btn-ghost" id="btn-back">← Back</button>
+      <div>
+        <div class="detail-title" id="detail-title"></div>
+        <div id="detail-tag"></div>
+      </div>
+      <div class="detail-actions">
+        <button class="btn-success" id="btn-log-workout">Log Session ✓</button>
+        <button class="btn-primary" id="btn-add-exercise">+ Exercise</button>
+        <button class="btn-danger" id="btn-delete-workout">Delete</button>
+      </div>
+    </div>
+
+    <div class="progress-bar-wrap" id="progress-wrap" style="display:none">
+      <span style="font-size:0.82rem;color:var(--muted)">Progress</span>
+      <div class="progress-bar"><div class="progress-fill" id="progress-fill" style="width:0%"></div></div>
+      <div class="progress-pct" id="progress-pct">0%</div>
+    </div>
+
+    <table class="exercise-table" id="exercise-table" style="margin-top:20px">
+      <thead>
+        <tr>
+          <th></th>
+          <th>Exercise</th>
+          <th>Sets</th>
+          <th>Reps</th>
+          <th>Weight</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody id="exercise-tbody"></tbody>
+    </table>
+    <div class="empty-state hidden" id="empty-exercises">
+      <div class="icon">➕</div>
+      <p>No exercises yet. Add your first one!</p>
+    </div>
+  </div>
+
+  <!-- ══ LOG VIEW ══ -->
+  <div class="view" id="view-log">
+    <div id="log-list"></div>
+    <div class="empty-state hidden" id="empty-log">
+      <div class="icon">📋</div>
+      <p>No sessions logged yet. Complete a workout to see it here.</p>
+    </div>
+  </div>
+
+  <!-- ══ AI PLAN VIEW ══ -->
+  <div class="view" id="view-ai">
+    <div style="max-width:640px;margin:0 auto">
+      <div style="margin-bottom:24px">
+        <h2 style="font-size:1.4rem;font-weight:800;margin-bottom:8px">✨ AI Workout Generator</h2>
+        <p style="color:var(--muted);font-size:0.9rem">Paste your notes, goals, or any text and AI will build a structured workout plan for you.</p>
+      </div>
+      <div class="form-group">
+        <label>Your Goals / Notes / Paste Anything</label>
+        <textarea id="ai-input" rows="7" placeholder="Examples:
+• I want to build muscle, 3 days a week, I have a barbell and dumbbells at home
+• Push/pull/legs split, intermediate level, 45 min sessions
+• My coach said focus on shoulders and legs this month
+• Paste a workout from a PDF, website, or text message..."></textarea>
+      </div>
+      <div style="display:flex;gap:10px;align-items:center;margin-bottom:20px">
+        <button class="btn-primary" id="btn-ai-generate" style="padding:12px 24px;font-size:1rem">✨ Generate Plan</button>
+        <span id="ai-status" style="color:var(--muted);font-size:0.85rem"></span>
+      </div>
+      <!-- API key note -->
+      <div id="ai-key-section" style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:18px;margin-bottom:20px">
+        <div style="font-size:0.88rem;font-weight:700;color:var(--accent);margin-bottom:8px">🔑 Anthropic API Key Required</div>
+        <p style="font-size:0.82rem;color:var(--muted);margin-bottom:12px">To use AI generation you need a free Anthropic API key. Your key is stored only in this browser, never sent anywhere except directly to Anthropic.</p>
+        <div style="display:flex;gap:8px">
+          <input type="password" id="ai-api-key" placeholder="sk-ant-..." style="flex:1" />
+          <button class="btn-small" onclick="saveApiKey()">Save Key</button>
+        </div>
+        <div id="key-status" style="font-size:0.78rem;margin-top:8px;color:var(--muted)"></div>
+      </div>
+      <!-- AI Result -->
+      <div id="ai-result-section" class="hidden">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+          <h3 style="font-size:1.1rem;font-weight:700">Generated Plan</h3>
+          <button class="btn-primary btn-small" id="btn-import-plan">Import to My Workouts →</button>
+        </div>
+        <div id="ai-result-cards"></div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<!-- ══ MODAL: Add / Edit Workout ══ -->
+<div class="overlay hidden" id="modal-workout">
+  <div class="modal">
+    <h2 id="modal-workout-title">New Workout</h2>
+    <div class="form-group">
+      <label>Workout Name</label>
+      <input type="text" id="input-workout-name" placeholder="e.g. Monday Push Day" maxlength="60" />
+    </div>
+    <div class="form-group">
+      <label>Category</label>
+      <select id="input-workout-tag">
+        <option value="push">Push</option>
+        <option value="pull">Pull</option>
+        <option value="legs">Legs</option>
+        <option value="full">Full Body</option>
+        <option value="cardio">Cardio</option>
+        <option value="other">Other</option>
+      </select>
+    </div>
+    <div class="form-actions">
+      <button class="btn-ghost" onclick="closeModal('modal-workout')">Cancel</button>
+      <button class="btn-primary" id="btn-save-workout">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MODAL: Add / Edit Exercise ══ -->
+<div class="overlay hidden" id="modal-exercise">
+  <div class="modal">
+    <h2 id="modal-exercise-title">Add Exercise</h2>
+    <div class="form-group">
+      <label>Exercise Name</label>
+      <input type="text" id="input-exercise-name" placeholder="e.g. Bench Press" maxlength="80" />
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Sets</label>
+        <input type="number" id="input-sets" min="1" max="99" placeholder="3" />
+      </div>
+      <div class="form-group">
+        <label>Reps</label>
+        <input type="text" id="input-reps" placeholder="10" maxlength="20" />
+      </div>
+      <div class="form-group">
+        <label>Weight</label>
+        <input type="text" id="input-weight" placeholder="135 lbs" maxlength="20" />
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Notes (optional)</label>
+      <textarea id="input-notes" placeholder="e.g. Keep elbows tucked"></textarea>
+    </div>
+    <div class="form-actions">
+      <button class="btn-ghost" onclick="closeModal('modal-exercise')">Cancel</button>
+      <button class="btn-primary" id="btn-save-exercise">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MODAL: Weekly Schedule ══ -->
+<div class="overlay hidden" id="modal-schedule">
+  <div class="modal" style="max-width:520px">
+    <h2>Weekly Schedule</h2>
+    <p style="color:var(--muted);font-size:0.85rem;margin-bottom:20px">Assign a workout to each day of the week so you always know what's up.</p>
+    <div id="schedule-form-rows"></div>
+    <div class="form-actions">
+      <button class="btn-ghost" onclick="closeModal('modal-schedule')">Cancel</button>
+      <button class="btn-primary" id="btn-save-schedule">Save Schedule</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ══ State ══
+let state = JSON.parse(localStorage.getItem('workout-pro') || 'null') || {
+  workouts: [],
+  log: [],
+  schedule: { 0:null,1:null,2:null,3:null,4:null,5:null,6:null } // Sun-Sat, value = workoutId
+};
+if (!state.schedule) state.schedule = { 0:null,1:null,2:null,3:null,4:null,5:null,6:null };
+const save = () => localStorage.setItem('workout-pro', JSON.stringify(state));
+
+let currentWorkoutId = null;
+let editExerciseId = null;
+let editWorkoutId = null;
+let sessionChecked = {}; // exerciseId -> bool (in-memory per session)
+
+// ══ Utilities ══
+const uid = () => Math.random().toString(36).slice(2, 10);
+const $ = id => document.getElementById(id);
+const tagLabel = t => ({ push:'Push', pull:'Pull', legs:'Legs', full:'Full Body', cardio:'Cardio', other:'Other' }[t] || t);
+
+// ══ Tabs ══
+document.querySelectorAll('.tab').forEach(t => {
+  t.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
+    document.querySelectorAll('.view').forEach(x => x.classList.remove('active'));
+    t.classList.add('active');
+    const view = t.dataset.tab;
+    if (view === 'log') { $('view-log').classList.add('active'); renderLog(); }
+    else if (view === 'ai') { $('view-ai').classList.add('active'); initAiView(); }
+    else { $('view-workouts').classList.add('active'); renderWorkouts(); }
+  });
+});
+
+// ══ Schedule Strip ══
+const DAY_NAMES = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+
+function renderScheduleStrip() {
+  const strip = $('schedule-strip');
+  if (!strip) return;
+  strip.innerHTML = '';
+  const today = new Date();
+  const todayDow = today.getDay();
+  // Show Mon-Sun starting from Monday of current week
+  const startOffset = (todayDow + 6) % 7; // days since Monday
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(today);
+    d.setDate(today.getDate() - startOffset + i);
+    const dow = d.getDay();
+    const wid = state.schedule[dow];
+    const w = wid ? state.workouts.find(x => x.id === wid) : null;
+    const isToday = dow === todayDow && d.toDateString() === today.toDateString();
+    const el = document.createElement('div');
+    el.className = 'sched-day' + (w ? ' has-workout' : '') + (isToday ? ' today-day' : '');
+    el.innerHTML = `
+      <div class="sched-day-label">${DAY_NAMES[dow]}</div>
+      <div class="sched-day-num">${d.getDate()}</div>
+      <div class="sched-day-workout">${w ? esc(w.name) : '—'}</div>`;
+    if (w) el.addEventListener('click', () => openDetail(w.id));
+    strip.appendChild(el);
+  }
+}
+
+$('btn-edit-schedule').addEventListener('click', openScheduleModal);
+
+function openScheduleModal() {
+  const rows = $('schedule-form-rows');
+  rows.innerHTML = '';
+  for (let dow = 1; dow <= 7; dow++) {
+    const d = dow % 7; // Mon=1..Sun=0
+    const current = state.schedule[d] || '';
+    const row = document.createElement('div');
+    row.style.cssText = 'display:flex;align-items:center;gap:12px;margin-bottom:12px';
+    row.innerHTML = `
+      <span style="width:36px;font-size:0.85rem;font-weight:700;color:var(--muted)">${DAY_NAMES[d]}</span>
+      <select data-dow="${d}" style="flex:1">
+        <option value="">— Rest Day —</option>
+        ${state.workouts.map(w => `<option value="${w.id}" ${w.id===current?'selected':''}>${esc(w.name)}</option>`).join('')}
+      </select>`;
+    rows.appendChild(row);
+  }
+  $('modal-schedule').classList.remove('hidden');
+}
+
+$('btn-save-schedule').addEventListener('click', () => {
+  document.querySelectorAll('#schedule-form-rows select').forEach(sel => {
+    state.schedule[sel.dataset.dow] = sel.value || null;
+  });
+  save();
+  closeModal('modal-schedule');
+  renderScheduleStrip();
+});
+
+// ══ Render Workouts Grid ══
+function renderWorkouts() {
+  renderScheduleStrip();
+  const grid = $('workout-grid');
+  const empty = $('empty-workouts');
+  grid.innerHTML = '';
+  if (!state.workouts.length) { empty.classList.remove('hidden'); return; }
+  empty.classList.add('hidden');
+
+  state.workouts.forEach(w => {
+    const card = document.createElement('div');
+    card.className = 'workout-card';
+    const preview = w.exercises.slice(0, 4);
+    const more = w.exercises.length - preview.length;
+    card.innerHTML = `
+      <div class="card-header">
+        <div class="card-title">${esc(w.name)}</div>
+        <span class="card-tag tag-${w.tag}">${tagLabel(w.tag)}</span>
+      </div>
+      <div class="card-exercises">
+        ${preview.map(e => `<div class="card-exercise-pill">• ${esc(e.name)}</div>`).join('')}
+        ${more > 0 ? `<div class="more-badge">+${more} more</div>` : ''}
+        ${!w.exercises.length ? `<div style="color:var(--muted);font-size:0.82rem">No exercises yet</div>` : ''}
+      </div>`;
+    card.addEventListener('click', () => openDetail(w.id));
+    grid.appendChild(card);
+  });
+}
+
+// ══ Render Detail ══
+function openDetail(id) {
+  currentWorkoutId = id;
+  sessionChecked = {};
+  const w = state.workouts.find(x => x.id === id);
+  if (!w) return;
+
+  // switch view
+  document.querySelectorAll('.view').forEach(x => x.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
+  $('view-detail').classList.add('active');
+
+  $('detail-title').textContent = w.name;
+  $('detail-tag').innerHTML = `<span class="card-tag tag-${w.tag}">${tagLabel(w.tag)}</span>`;
+  renderExercises(w);
+}
+
+function renderExercises(w) {
+  const tbody = $('exercise-tbody');
+  const empty = $('empty-exercises');
+  tbody.innerHTML = '';
+
+  if (!w.exercises.length) {
+    empty.classList.remove('hidden');
+    $('progress-wrap').style.display = 'none';
+    return;
+  }
+  empty.classList.add('hidden');
+  $('progress-wrap').style.display = 'flex';
+
+  w.exercises.forEach(e => {
+    const checked = !!sessionChecked[e.id];
+    const tr = document.createElement('tr');
+    tr.className = checked ? 'done-row' : '';
+    tr.innerHTML = `
+      <td><div class="done-check ${checked?'checked':''}" data-eid="${e.id}">${checked?'✓':''}</div></td>
+      <td><div class="exercise-name">${esc(e.name)}</div>${e.notes?`<div class="exercise-notes">${esc(e.notes)}</div>`:''}</td>
+      <td>${esc(e.sets)}</td>
+      <td>${esc(e.reps)}</td>
+      <td>${esc(e.weight)}</td>
+      <td>
+        <button class="btn-icon" title="Edit" data-edit-eid="${e.id}">✏️</button>
+        <button class="btn-icon" title="Delete" data-del-eid="${e.id}">🗑️</button>
+      </td>`;
+    tbody.appendChild(tr);
+  });
+
+  updateProgress(w);
+
+  tbody.querySelectorAll('.done-check').forEach(el => {
+    el.addEventListener('click', () => { toggleCheck(el.dataset.eid, w); });
+  });
+  tbody.querySelectorAll('[data-edit-eid]').forEach(el => {
+    el.addEventListener('click', () => openEditExercise(el.dataset.editEid, w));
+  });
+  tbody.querySelectorAll('[data-del-eid]').forEach(el => {
+    el.addEventListener('click', () => deleteExercise(el.dataset.delEid, w));
+  });
+}
+
+function toggleCheck(eid, w) {
+  sessionChecked[eid] = !sessionChecked[eid];
+  renderExercises(w);
+}
+
+function updateProgress(w) {
+  const total = w.exercises.length;
+  const done = w.exercises.filter(e => sessionChecked[e.id]).length;
+  const pct = total ? Math.round((done / total) * 100) : 0;
+  $('progress-fill').style.width = pct + '%';
+  $('progress-pct').textContent = pct + '%';
+}
+
+// ══ Log Workout Session ══
+$('btn-log-workout').addEventListener('click', () => {
+  const w = state.workouts.find(x => x.id === currentWorkoutId);
+  if (!w || !w.exercises.length) { alert('Add some exercises first!'); return; }
+  const entry = {
+    id: uid(),
+    date: new Date().toISOString(),
+    workoutName: w.name,
+    tag: w.tag,
+    exercises: w.exercises.map(e => ({
+      name: e.name, sets: e.sets, reps: e.reps, weight: e.weight,
+      done: !!sessionChecked[e.id]
+    }))
+  };
+  state.log.unshift(entry);
+  save();
+  sessionChecked = {};
+  const w2 = state.workouts.find(x => x.id === currentWorkoutId);
+  renderExercises(w2);
+  alert(`Session logged! Great work! 💪`);
+});
+
+// ══ Back button ══
+$('btn-back').addEventListener('click', () => {
+  currentWorkoutId = null;
+  document.querySelectorAll('.view').forEach(x => x.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
+  $('view-workouts').classList.add('active');
+  document.querySelector('[data-tab="workouts"]').classList.add('active');
+  renderWorkouts();
+});
+
+// ══ Delete Workout ══
+$('btn-delete-workout').addEventListener('click', () => {
+  if (!confirm('Delete this workout?')) return;
+  state.workouts = state.workouts.filter(x => x.id !== currentWorkoutId);
+  save();
+  $('btn-back').click();
+});
+
+// ══ Add/Edit Workout Modal ══
+$('btn-add-workout').addEventListener('click', openAddWorkout);
+function openAddWorkout() {
+  editWorkoutId = null;
+  $('modal-workout-title').textContent = 'New Workout';
+  $('input-workout-name').value = '';
+  $('input-workout-tag').value = 'push';
+  $('btn-save-workout').textContent = 'Create Workout';
+  $('modal-workout').classList.remove('hidden');
+  setTimeout(() => $('input-workout-name').focus(), 50);
+}
+
+$('btn-save-workout').addEventListener('click', () => {
+  const name = $('input-workout-name').value.trim();
+  if (!name) { $('input-workout-name').focus(); return; }
+  const tag = $('input-workout-tag').value;
+  if (editWorkoutId) {
+    const w = state.workouts.find(x => x.id === editWorkoutId);
+    w.name = name; w.tag = tag;
+  } else {
+    state.workouts.push({ id: uid(), name, tag, exercises: [] });
+  }
+  save();
+  closeModal('modal-workout');
+  renderWorkouts();
+});
+
+// ══ Add/Edit Exercise Modal ══
+$('btn-add-exercise').addEventListener('click', () => {
+  editExerciseId = null;
+  $('modal-exercise-title').textContent = 'Add Exercise';
+  $('input-exercise-name').value = '';
+  $('input-sets').value = '3';
+  $('input-reps').value = '10';
+  $('input-weight').value = '';
+  $('input-notes').value = '';
+  $('btn-save-exercise').textContent = 'Add Exercise';
+  $('modal-exercise').classList.remove('hidden');
+  setTimeout(() => $('input-exercise-name').focus(), 50);
+});
+
+function openEditExercise(eid, w) {
+  const e = w.exercises.find(x => x.id === eid);
+  if (!e) return;
+  editExerciseId = eid;
+  $('modal-exercise-title').textContent = 'Edit Exercise';
+  $('input-exercise-name').value = e.name;
+  $('input-sets').value = e.sets;
+  $('input-reps').value = e.reps;
+  $('input-weight').value = e.weight;
+  $('input-notes').value = e.notes || '';
+  $('btn-save-exercise').textContent = 'Save Changes';
+  $('modal-exercise').classList.remove('hidden');
+}
+
+$('btn-save-exercise').addEventListener('click', () => {
+  const name = $('input-exercise-name').value.trim();
+  if (!name) { $('input-exercise-name').focus(); return; }
+  const ex = {
+    name,
+    sets: $('input-sets').value || '3',
+    reps: $('input-reps').value || '10',
+    weight: $('input-weight').value || '—',
+    notes: $('input-notes').value.trim()
+  };
+  const w = state.workouts.find(x => x.id === currentWorkoutId);
+  if (editExerciseId) {
+    const idx = w.exercises.findIndex(x => x.id === editExerciseId);
+    w.exercises[idx] = { ...w.exercises[idx], ...ex };
+  } else {
+    w.exercises.push({ id: uid(), ...ex });
+  }
+  save();
+  closeModal('modal-exercise');
+  renderExercises(w);
+});
+
+function deleteExercise(eid, w) {
+  if (!confirm('Remove this exercise?')) return;
+  w.exercises = w.exercises.filter(x => x.id !== eid);
+  delete sessionChecked[eid];
+  save();
+  renderExercises(w);
+}
+
+// ══ Render Log ══
+function renderLog() {
+  const list = $('log-list');
+  const empty = $('empty-log');
+  list.innerHTML = '';
+  if (!state.log.length) { empty.classList.remove('hidden'); return; }
+  empty.classList.add('hidden');
+
+  state.log.forEach(entry => {
+    const date = new Date(entry.date);
+    const dateStr = date.toLocaleDateString('en-US', { weekday:'short', month:'short', day:'numeric', year:'numeric' });
+    const timeStr = date.toLocaleTimeString('en-US', { hour:'numeric', minute:'2-digit' });
+    const done = entry.exercises.filter(e => e.done).length;
+    const total = entry.exercises.length;
+
+    const div = document.createElement('div');
+    div.className = 'log-day';
+    div.innerHTML = `
+      <div class="log-day-header">
+        <div>
+          <div style="display:flex;align-items:center;gap:10px">
+            <span class="log-date">${dateStr}</span>
+            <span class="card-tag tag-${entry.tag}">${tagLabel(entry.tag)}</span>
+          </div>
+          <div class="log-name">${esc(entry.workoutName)}</div>
+        </div>
+        <div style="text-align:right">
+          <div class="log-summary">${total} exercises · ${done}/${total} completed</div>
+          <div style="color:var(--muted);font-size:0.78rem">${timeStr}</div>
+        </div>
+      </div>
+      <div class="log-body">
+        ${entry.exercises.map(e => `
+          <div class="log-exercise-row">
+            <span style="color:${e.done?'var(--success)':'var(--muted)'};font-size:1rem">${e.done?'✓':'○'}</span>
+            <span class="log-ex-name">${esc(e.name)}</span>
+            <span class="log-ex-detail">${esc(e.sets)} sets × ${esc(e.reps)} reps</span>
+            <span class="log-ex-detail" style="color:var(--accent)">${esc(e.weight)}</span>
+          </div>`).join('')}
+      </div>`;
+
+    div.querySelector('.log-day-header').addEventListener('click', () => {
+      div.querySelector('.log-body').classList.toggle('open');
+    });
+    list.appendChild(div);
+  });
+}
+
+// ══ Close Modals ══
+function closeModal(id) { $(id).classList.add('hidden'); }
+document.querySelectorAll('.overlay').forEach(overlay => {
+  overlay.addEventListener('click', e => { if (e.target === overlay) overlay.classList.add('hidden'); });
+});
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') document.querySelectorAll('.overlay:not(.hidden)').forEach(o => o.classList.add('hidden'));
+});
+
+// ══ Escape HTML ══
+function esc(str) {
+  return String(str ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+// ══ AI Plan Generator ══
+let aiPlan = null;
+
+function initAiView() {
+  const stored = localStorage.getItem('wp-api-key');
+  if (stored) {
+    $('ai-api-key').value = stored;
+    $('key-status').textContent = '✓ Key saved';
+    $('key-status').style.color = 'var(--success)';
+  }
+}
+
+function saveApiKey() {
+  const key = $('ai-api-key').value.trim();
+  if (!key.startsWith('sk-ant-')) { $('key-status').textContent = 'Key should start with sk-ant-'; $('key-status').style.color = 'var(--accent2)'; return; }
+  localStorage.setItem('wp-api-key', key);
+  $('key-status').textContent = '✓ Key saved';
+  $('key-status').style.color = 'var(--success)';
+}
+
+$('btn-ai-generate').addEventListener('click', async () => {
+  const text = $('ai-input').value.trim();
+  if (!text) { $('ai-input').focus(); return; }
+  const key = localStorage.getItem('wp-api-key') || $('ai-api-key').value.trim();
+  if (!key) { $('ai-api-key').focus(); return; }
+
+  $('btn-ai-generate').disabled = true;
+  $('ai-status').textContent = 'Generating plan…';
+  $('ai-result-section').classList.add('hidden');
+
+  const prompt = `You are a personal trainer. The user provided the following text describing their workout goals, schedule, or existing workout:
+
+"""
+${text}
+"""
+
+Generate a structured workout plan from this. Return ONLY valid JSON in this exact format (no markdown, no extra text):
+{
+  "days": [
+    {
+      "name": "Day name (e.g. Monday - Push Day)",
+      "tag": "push|pull|legs|full|cardio|other",
+      "exercises": [
+        { "name": "Exercise name", "sets": "3", "reps": "10", "weight": "bodyweight", "notes": "" }
+      ]
+    }
+  ]
+}
+
+Rules:
+- Include 2-6 workout days based on the user's input
+- 4-8 exercises per day
+- Be specific with exercise names
+- For weight use "bodyweight", "light", "moderate", "heavy", or a specific weight if mentioned
+- Keep notes short or empty string`;
+
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': key,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-calls': 'true'
+      },
+      body: JSON.stringify({
+        model: 'claude-haiku-4-5-20251001',
+        max_tokens: 2048,
+        messages: [{ role: 'user', content: prompt }]
+      })
+    });
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error?.message || `API error ${res.status}`);
+    }
+
+    const data = await res.json();
+    const raw = data.content[0].text.trim();
+    const jsonStr = raw.replace(/^```json?\s*/i, '').replace(/```\s*$/i, '');
+    aiPlan = JSON.parse(jsonStr);
+    renderAiPlan(aiPlan);
+    $('ai-status').textContent = `✓ ${aiPlan.days.length} day plan generated!`;
+    $('ai-status').style.color = 'var(--success)';
+  } catch(e) {
+    $('ai-status').textContent = '✗ ' + e.message;
+    $('ai-status').style.color = 'var(--accent2)';
+  } finally {
+    $('btn-ai-generate').disabled = false;
+  }
+});
+
+function renderAiPlan(plan) {
+  const cards = $('ai-result-cards');
+  cards.innerHTML = '';
+  plan.days.forEach(day => {
+    const div = document.createElement('div');
+    div.className = 'ai-day-card';
+    div.innerHTML = `
+      <div class="ai-day-header">
+        <span class="ai-day-name">${esc(day.name)}</span>
+        <span class="card-tag tag-${day.tag || 'other'}">${tagLabel(day.tag || 'other')}</span>
+      </div>
+      <div class="ai-day-body">
+        ${day.exercises.map(e => `
+          <div class="ai-exercise-row">
+            <span class="ai-ex-name">${esc(e.name)}</span>
+            <span class="ai-ex-meta hide-mobile">${esc(e.sets)} sets</span>
+            <span class="ai-ex-meta">${esc(e.reps)} reps</span>
+            <span class="ai-ex-meta" style="color:var(--accent)">${esc(e.weight)}</span>
+          </div>`).join('')}
+      </div>`;
+    cards.appendChild(div);
+  });
+  $('ai-result-section').classList.remove('hidden');
+}
+
+$('btn-import-plan').addEventListener('click', () => {
+  if (!aiPlan) return;
+  let imported = 0;
+  aiPlan.days.forEach(day => {
+    const w = {
+      id: uid(),
+      name: day.name,
+      tag: day.tag || 'other',
+      exercises: (day.exercises || []).map(e => ({
+        id: uid(), name: e.name, sets: e.sets, reps: e.reps, weight: e.weight, notes: e.notes || ''
+      }))
+    };
+    state.workouts.push(w);
+    imported++;
+  });
+  save();
+  alert(`${imported} workouts imported! Find them in "My Workouts".`);
+  document.querySelector('[data-tab="workouts"]').click();
+});
+
+// ══ PWA Install Banner ══
+let deferredInstallPrompt = null;
+
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault();
+  deferredInstallPrompt = e;
+  if (!localStorage.getItem('wp-hide-install')) {
+    $('install-banner').classList.remove('hidden');
+  }
+});
+
+function triggerInstall() {
+  if (deferredInstallPrompt) {
+    deferredInstallPrompt.prompt();
+    deferredInstallPrompt.userChoice.then(() => { deferredInstallPrompt = null; hideBanner(); });
+  } else {
+    // iOS instructions
+    alert('To install on iPhone/iPad:\n1. Tap the Share button (box with arrow)\n2. Scroll down and tap "Add to Home Screen"\n3. Tap "Add"');
+  }
+}
+
+function hideBanner() {
+  $('install-banner').classList.add('hidden');
+  localStorage.setItem('wp-hide-install', '1');
+}
+
+// ══ Service Worker ══
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('./sw.js').catch(() => {});
+}
+
+// ══ Init ══
+renderWorkouts();
+</script>
+</body>
+</html>
