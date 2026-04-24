@@ -433,6 +433,7 @@
   <h1>💪 Workout<span>Pro</span></h1>
   <div class="header-actions">
     <button class="btn-primary" id="btn-add-workout">+ New Workout</button>
+    <button id="btn-profile" style="background:var(--accent);border:none;border-radius:50%;width:38px;height:38px;font-size:1rem;font-weight:800;color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0" title="Switch profile">?</button>
   </div>
 </header>
 
@@ -525,6 +526,14 @@
   <!-- ══ AI PLAN VIEW ══ -->
   <div class="view" id="view-ai">
     <div style="max-width:640px;margin:0 auto">
+      <!-- Sub-tabs -->
+      <div style="display:flex;gap:8px;margin-bottom:24px">
+        <button class="ai-subtab active" data-subtab="ai-gen" style="padding:7px 18px;border-radius:99px;font-size:0.85rem;font-weight:700;cursor:pointer;border:1px solid var(--accent);background:var(--accent);color:#fff">✨ AI Generate</button>
+        <button class="ai-subtab" data-subtab="notes-import" style="padding:7px 18px;border-radius:99px;font-size:0.85rem;font-weight:700;cursor:pointer;border:1px solid var(--border);background:transparent;color:var(--muted)">📋 Import Notes</button>
+      </div>
+
+      <!-- AI Generate panel -->
+      <div id="panel-ai-gen">
       <div style="margin-bottom:24px">
         <h2 style="font-size:1.4rem;font-weight:800;margin-bottom:8px">✨ AI Workout Generator</h2>
         <p style="color:var(--muted);font-size:0.9rem">Paste your notes, goals, or any text and AI will build a structured workout plan for you.</p>
@@ -559,6 +568,43 @@
         </div>
         <div id="ai-result-cards"></div>
       </div>
+      </div><!-- end panel-ai-gen -->
+
+      <!-- Notes Import panel -->
+      <div id="panel-notes-import" class="hidden">
+        <div style="margin-bottom:24px">
+          <h2 style="font-size:1.4rem;font-weight:800;margin-bottom:8px">📋 Import from Notes</h2>
+          <p style="color:var(--muted);font-size:0.9rem">Paste any text from your Notes app, a text message, PDF, or website. The app will read it and build your workout cards automatically.</p>
+        </div>
+        <div class="form-group">
+          <label>Paste your workout notes here</label>
+          <textarea id="notes-input" rows="10" placeholder="Paste anything — examples:
+
+Monday - Push Day
+- Bench Press 3x10 135lbs
+- Overhead Press 3x8
+- Tricep Pushdown 3x12
+
+Wednesday - Pull Day
+Deadlift 4x5
+Pull Ups 3x8
+Barbell Row 3x10 @ 95lbs
+
+Or just a list of exercises, a screenshot text, a coach's message..."></textarea>
+        </div>
+        <div style="display:flex;gap:10px;align-items:center;margin-bottom:20px">
+          <button class="btn-primary" id="btn-parse-notes" style="padding:12px 24px;font-size:1rem">📋 Parse Notes</button>
+          <span id="notes-status" style="color:var(--muted);font-size:0.85rem"></span>
+        </div>
+        <div id="notes-result-section" class="hidden">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+            <h3 style="font-size:1.1rem;font-weight:700">Parsed Workout</h3>
+            <button class="btn-primary btn-small" id="btn-import-notes-plan">Import to My Workouts →</button>
+          </div>
+          <div id="notes-result-cards"></div>
+        </div>
+      </div><!-- end panel-notes-import -->
+
     </div>
   </div>
 </main>
@@ -622,6 +668,25 @@
   </div>
 </div>
 
+<!-- ══ MODAL: Profile / Sign In ══ -->
+<div class="overlay hidden" id="modal-profile">
+  <div class="modal" style="max-width:400px">
+    <h2>👤 Profiles</h2>
+    <p style="color:var(--muted);font-size:0.85rem;margin-bottom:20px">Each profile has its own separate workouts and history. Switch between people who share this device.</p>
+    <div id="profile-list" style="margin-bottom:20px"></div>
+    <div style="border-top:1px solid var(--border);padding-top:18px;margin-top:4px">
+      <div style="font-size:0.82rem;font-weight:700;text-transform:uppercase;letter-spacing:0.4px;color:var(--muted);margin-bottom:10px">Add New Profile</div>
+      <div style="display:flex;gap:8px">
+        <input type="text" id="input-new-profile" placeholder="Your name" maxlength="30" style="flex:1" />
+        <button class="btn-primary" id="btn-create-profile">Create</button>
+      </div>
+    </div>
+    <div class="form-actions" style="margin-top:16px">
+      <button class="btn-ghost" onclick="closeModal('modal-profile')">Close</button>
+    </div>
+  </div>
+</div>
+
 <!-- ══ MODAL: Weekly Schedule ══ -->
 <div class="overlay hidden" id="modal-schedule">
   <div class="modal" style="max-width:520px">
@@ -636,14 +701,119 @@
 </div>
 
 <script>
+// ══ Profile System ══
+const PROFILES_KEY = 'wp-profiles';
+const ACTIVE_KEY   = 'wp-active-profile';
+
+function getProfiles() {
+  return JSON.parse(localStorage.getItem(PROFILES_KEY) || '[]');
+}
+function saveProfiles(profiles) {
+  localStorage.setItem(PROFILES_KEY, JSON.stringify(profiles));
+}
+function getActiveProfile() {
+  return localStorage.getItem(ACTIVE_KEY) || null;
+}
+function setActiveProfile(name) {
+  localStorage.setItem(ACTIVE_KEY, name);
+}
+function stateKey(name) {
+  return 'workout-pro-' + name.toLowerCase().replace(/\s+/g, '-');
+}
+function loadProfileState(name) {
+  // migrate old data into first profile
+  const key = stateKey(name);
+  const stored = localStorage.getItem(key) || localStorage.getItem('workout-pro') || 'null';
+  const s = JSON.parse(stored) || { workouts:[], log:[], schedule:{0:null,1:null,2:null,3:null,4:null,5:null,6:null} };
+  if (!s.schedule) s.schedule = {0:null,1:null,2:null,3:null,4:null,5:null,6:null};
+  return s;
+}
+
+// Bootstrap: ensure at least one profile exists
+(function() {
+  let profiles = getProfiles();
+  if (!profiles.length) {
+    // Check if there's existing data to migrate
+    const oldData = localStorage.getItem('workout-pro');
+    const defaultName = 'Me';
+    profiles = [defaultName];
+    saveProfiles(profiles);
+    setActiveProfile(defaultName);
+    if (oldData) localStorage.setItem(stateKey(defaultName), oldData);
+  }
+  if (!getActiveProfile()) setActiveProfile(profiles[0]);
+})();
+
+let currentProfile = getActiveProfile();
+
 // ══ State ══
-let state = JSON.parse(localStorage.getItem('workout-pro') || 'null') || {
-  workouts: [],
-  log: [],
-  schedule: { 0:null,1:null,2:null,3:null,4:null,5:null,6:null } // Sun-Sat, value = workoutId
+let state = loadProfileState(currentProfile);
+
+const save = () => {
+  localStorage.setItem(stateKey(currentProfile), JSON.stringify(state));
 };
-if (!state.schedule) state.schedule = { 0:null,1:null,2:null,3:null,4:null,5:null,6:null };
-const save = () => localStorage.setItem('workout-pro', JSON.stringify(state));
+
+function switchProfile(name) {
+  currentProfile = name;
+  setActiveProfile(name);
+  state = loadProfileState(name);
+  currentWorkoutId = null;
+  sessionChecked = {};
+  updateProfileButton();
+  // Go back to workouts view
+  document.querySelectorAll('.view').forEach(x => x.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
+  $('view-workouts').classList.add('active');
+  document.querySelector('[data-tab="workouts"]').classList.add('active');
+  renderWorkouts();
+  closeModal('modal-profile');
+}
+
+function updateProfileButton() {
+  const btn = $('btn-profile');
+  if (btn) btn.textContent = currentProfile.charAt(0).toUpperCase();
+  if (btn) btn.title = currentProfile + ' — tap to switch profile';
+}
+
+function renderProfileModal() {
+  const list = $('profile-list');
+  const profiles = getProfiles();
+  list.innerHTML = profiles.map(p => `
+    <div style="display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:8px;background:${p===currentProfile?'rgba(108,99,255,0.12)':'var(--surface2)'};border:1px solid ${p===currentProfile?'var(--accent)':'var(--border)'};margin-bottom:8px">
+      <div style="width:36px;height:36px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;font-weight:800;color:#fff;flex-shrink:0">${esc(p.charAt(0).toUpperCase())}</div>
+      <div style="flex:1">
+        <div style="font-weight:700;font-size:0.95rem">${esc(p)}</div>
+        ${p===currentProfile?'<div style="font-size:0.75rem;color:var(--accent)">Active</div>':''}
+      </div>
+      ${p!==currentProfile?`<button class="btn-ghost" style="font-size:0.8rem;padding:5px 12px" onclick="switchProfile('${esc(p)}')">Switch</button>`:''}
+      ${profiles.length>1&&p!==currentProfile?`<button class="btn-danger" style="padding:4px 10px;font-size:0.75rem" onclick="deleteProfile('${esc(p)}')">✕</button>`:''}
+    </div>`).join('');
+}
+
+function deleteProfile(name) {
+  if (!confirm(`Delete profile "${name}" and all their workout data? This cannot be undone.`)) return;
+  let profiles = getProfiles();
+  profiles = profiles.filter(p => p !== name);
+  saveProfiles(profiles);
+  localStorage.removeItem(stateKey(name));
+  renderProfileModal();
+}
+
+$('btn-profile').addEventListener('click', () => {
+  renderProfileModal();
+  $('modal-profile').classList.remove('hidden');
+});
+
+$('btn-create-profile').addEventListener('click', () => {
+  const name = $('input-new-profile').value.trim();
+  if (!name) { $('input-new-profile').focus(); return; }
+  let profiles = getProfiles();
+  if (profiles.includes(name)) { alert('A profile with that name already exists.'); return; }
+  profiles.push(name);
+  saveProfiles(profiles);
+  $('input-new-profile').value = '';
+  switchProfile(name);
+});
 
 let currentWorkoutId = null;
 let editExerciseId = null;
@@ -1184,7 +1354,138 @@ if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('./sw.js').catch(() => {});
 }
 
+// ══ AI/Notes Sub-tabs ══
+document.querySelectorAll('.ai-subtab').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.ai-subtab').forEach(b => {
+      b.style.background = 'transparent';
+      b.style.color = 'var(--muted)';
+      b.style.borderColor = 'var(--border)';
+    });
+    btn.style.background = 'var(--accent)';
+    btn.style.color = '#fff';
+    btn.style.borderColor = 'var(--accent)';
+    const target = btn.dataset.subtab;
+    $('panel-ai-gen').classList.toggle('hidden', target !== 'ai-gen');
+    $('panel-notes-import').classList.toggle('hidden', target !== 'notes-import');
+  });
+});
+
+// ══ Notes Parser ══
+let notesPlan = null;
+
+function inferTag(text) {
+  const t = text.toLowerCase();
+  if (/push|chest|bench|shoulder|tricep/.test(t)) return 'push';
+  if (/pull|back|bicep|row|deadlift|chin|lat/.test(t)) return 'pull';
+  if (/leg|squat|lunge|hamstring|quad|glute|calf/.test(t)) return 'legs';
+  if (/cardio|run|bike|swim|hiit|treadmill|elliptical/.test(t)) return 'cardio';
+  if (/full|total|whole|body/.test(t)) return 'full';
+  return 'other';
+}
+
+function parseExerciseLine(line) {
+  line = line.replace(/^[\-•*➡️✓✔️\d\.]+\s*/, '').trim();
+  if (line.length < 2) return null;
+  // "Name 3x10 @ 135lbs"  or  "Name 3 x 10"
+  let m = line.match(/^(.+?)\s+(\d+)\s*[x×]\s*(\d+)\s*(?:[@at\s]+(.+))?$/i);
+  if (m) return { id: uid(), name: m[1].trim(), sets: m[2], reps: m[3], weight: (m[4]||'—').trim(), notes: '' };
+  // "Name - 3 sets, 10 reps @ 135"
+  m = line.match(/^(.+?)\s*[-:]\s*(\d+)\s*sets?\s*[,x×]?\s*(\d+)\s*reps?\s*(?:[@at\s]+(.+))?$/i);
+  if (m) return { id: uid(), name: m[1].trim(), sets: m[2], reps: m[3], weight: (m[4]||'—').trim(), notes: '' };
+  // "Name 3 sets 10 reps"
+  m = line.match(/^(.+?)\s+(\d+)\s+sets?\s+(\d+)\s+reps?\s*(.*)$/i);
+  if (m) return { id: uid(), name: m[1].trim(), sets: m[2], reps: m[3], weight: (m[4]||'—').trim(), notes: '' };
+  // Just a name (must look like an exercise, not a header)
+  if (line.length <= 60 && !/^\d/.test(line)) {
+    return { id: uid(), name: line, sets: '3', reps: '10', weight: '—', notes: '' };
+  }
+  return null;
+}
+
+function isHeaderLine(line) {
+  const clean = line.replace(/[-:_*#]+/g, ' ').trim();
+  if (!clean) return false;
+  if (/^(monday|tuesday|wednesday|thursday|friday|saturday|sunday)/i.test(clean)) return true;
+  if (/^day\s*\d+/i.test(clean)) return true;
+  if (/^(push|pull|legs?|chest|back|shoulders?|arms?|core|cardio|upper|lower|full\s*body|workout\s*\d*)/i.test(clean)) return true;
+  if (clean.endsWith(':') && clean.length < 50) return true;
+  if (clean === clean.toUpperCase() && clean.length > 3 && /[A-Z]/.test(clean)) return true;
+  return false;
+}
+
+function parseWorkoutNotes(text) {
+  const lines = text.split('\n').map(l => l.trim());
+  const days = [];
+  let currentDay = null;
+
+  for (const line of lines) {
+    if (!line) continue;
+    if (isHeaderLine(line)) {
+      const name = line.replace(/[-:]+$/, '').trim();
+      currentDay = { id: uid(), name, tag: inferTag(name), exercises: [] };
+      days.push(currentDay);
+    } else {
+      const ex = parseExerciseLine(line);
+      if (ex) {
+        if (!currentDay) {
+          currentDay = { id: uid(), name: 'Workout', tag: 'other', exercises: [] };
+          days.push(currentDay);
+        }
+        currentDay.exercises.push(ex);
+      }
+    }
+  }
+  return days.filter(d => d.exercises.length > 0);
+}
+
+$('btn-parse-notes').addEventListener('click', () => {
+  const text = $('notes-input').value.trim();
+  if (!text) { $('notes-input').focus(); return; }
+  notesPlan = parseWorkoutNotes(text);
+  if (!notesPlan.length) {
+    $('notes-status').textContent = '✗ Could not find any exercises. Try formatting like "Exercise 3x10"';
+    $('notes-status').style.color = 'var(--accent2)';
+    $('notes-result-section').classList.add('hidden');
+    return;
+  }
+  const totalEx = notesPlan.reduce((s, d) => s + d.exercises.length, 0);
+  $('notes-status').textContent = `✓ Found ${notesPlan.length} workout day${notesPlan.length>1?'s':''}, ${totalEx} exercises`;
+  $('notes-status').style.color = 'var(--success)';
+  const cards = $('notes-result-cards');
+  cards.innerHTML = '';
+  notesPlan.forEach(day => {
+    const div = document.createElement('div');
+    div.className = 'ai-day-card';
+    div.innerHTML = `
+      <div class="ai-day-header">
+        <span class="ai-day-name">${esc(day.name)}</span>
+        <span class="card-tag tag-${day.tag}">${tagLabel(day.tag)}</span>
+      </div>
+      <div class="ai-day-body">
+        ${day.exercises.map(e => `
+          <div class="ai-exercise-row">
+            <span class="ai-ex-name">${esc(e.name)}</span>
+            <span class="ai-ex-meta hide-mobile">${esc(e.sets)} sets</span>
+            <span class="ai-ex-meta">${esc(e.reps)} reps</span>
+            <span class="ai-ex-meta" style="color:var(--accent)">${esc(e.weight)}</span>
+          </div>`).join('')}
+      </div>`;
+    cards.appendChild(div);
+  });
+  $('notes-result-section').classList.remove('hidden');
+});
+
+$('btn-import-notes-plan').addEventListener('click', () => {
+  if (!notesPlan) return;
+  notesPlan.forEach(day => state.workouts.push({ ...day, id: uid() }));
+  save();
+  alert(`${notesPlan.length} workout${notesPlan.length>1?'s':''} imported!`);
+  document.querySelector('[data-tab="workouts"]').click();
+});
+
 // ══ Init ══
+updateProfileButton();
 renderWorkouts();
 </script>
 </body>
