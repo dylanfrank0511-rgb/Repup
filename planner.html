@@ -1,0 +1,896 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
+  <title>Overload Planner — RepUp</title>
+  <meta name="apple-mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+  <meta name="theme-color" content="#00E5FF"/>
+  <link rel="icon" type="image/svg+xml" href="icon.svg"/>
+  <link rel="stylesheet" href="style.css?v=14"/>
+  <style>
+    /* ── PLANNER-SPECIFIC TOKENS ─────────────────────────────── */
+    :root {
+      --pg:      #00FF88;   /* neon mint — progression green     */
+      --pg-dim:  rgba(0,255,136,0.10);
+      --pg-glow: rgba(0,255,136,0.22);
+      --amber:   #F5FF00;   /* neon yellow for deload/warning    */
+      --amber-dim: rgba(245,255,0,0.09);
+      --blue-p:  #00A7FF;
+      --blue-dim:#00A7FF1A;
+      --rose-p:  #FF0055;
+      --rose-dim:rgba(255,0,85,0.10);
+      --pur-p:   #BF00FF;
+      --pur-dim: rgba(191,0,255,0.10);
+      --cy-p:    #00E5FF;
+      --cy-dim:  rgba(0,229,255,0.10);
+      --radius:  14px;
+      --radius-sm: 9px;
+    }
+
+    /* ── SHELL ───────────────────────────────────────────────── */
+    html, body { min-height: 100%; }
+    body { padding-bottom: calc(72px + env(safe-area-inset-bottom)); }
+
+    /* ── HERO ────────────────────────────────────────────────── */
+    .hero {
+      text-align: center;
+      padding: 3rem 1.5rem 2rem;
+      background: radial-gradient(ellipse 60% 50% at 50% -10%,
+        rgba(0,255,136,0.08), transparent);
+    }
+    .hero-eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: var(--card2);
+      border: 1px solid var(--border2);
+      border-radius: 99px;
+      padding: 0.3rem 0.9rem;
+      font-size: 0.72rem;
+      font-weight: 700;
+      color: var(--t2);
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      margin-bottom: 1.1rem;
+    }
+    .hero-eyebrow .dot { width:6px;height:6px;background:var(--pg);border-radius:50%; }
+    .hero h1 {
+      font-size: clamp(1.6rem, 4.5vw, 2.5rem);
+      font-weight: 900;
+      letter-spacing: -0.04em;
+      line-height: 1.1;
+      margin-bottom: 0.75rem;
+      color: var(--t1);
+    }
+    .hero h1 span { color: var(--pg); }
+    .hero p { font-size: 0.9rem; color: var(--t2); max-width: 460px; margin: 0 auto; line-height: 1.65; }
+
+    /* ── CONTAINER ───────────────────────────────────────────── */
+    .container { max-width: 860px; margin: 0 auto; padding: 0 1.25rem 2rem; }
+
+    /* ── FORM CARD ───────────────────────────────────────────── */
+    .form-card {
+      background: var(--card);
+      border: 1px solid var(--border2);
+      border-radius: var(--r-xl);
+      overflow: hidden;
+      margin-bottom: 1rem;
+    }
+    .form-section {
+      padding: 1.5rem 1.75rem;
+      border-bottom: 1px solid var(--border);
+    }
+    .form-section:last-child { border-bottom: none; }
+
+    .section-eyebrow {
+      font-size: 0.62rem;
+      font-weight: 800;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--t3);
+      margin-bottom: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .section-eyebrow::after { content:''; flex:1; height:1px; background:var(--border); }
+
+    /* ── INPUTS ──────────────────────────────────────────────── */
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; }
+    .form-group { display: flex; flex-direction: column; gap: 0.5rem; }
+    label { font-size: 0.78rem; font-weight: 600; color: var(--t2); }
+    .input-row { display: flex; gap: 0.5rem; }
+
+    input[type="number"] {
+      flex: 1;
+      background: var(--card2);
+      border: 1.5px solid var(--border2);
+      border-radius: var(--radius-sm);
+      padding: 0.7rem 1rem;
+      color: var(--t1);
+      font-size: 1rem;
+      font-weight: 500;
+      outline: none;
+      font-family: inherit;
+      transition: border-color 0.15s, box-shadow 0.15s;
+      -moz-appearance: textfield;
+    }
+    input[type="number"]::-webkit-inner-spin-button,
+    input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; }
+    input[type="number"]:focus {
+      border-color: var(--pg);
+      box-shadow: 0 0 0 3px var(--pg-dim);
+    }
+    input[type="number"].error {
+      border-color: var(--rose-p);
+      box-shadow: 0 0 0 3px var(--rose-dim);
+    }
+
+    .unit-toggle {
+      display: flex;
+      background: var(--card2);
+      border: 1.5px solid var(--border2);
+      border-radius: var(--radius-sm);
+      overflow: hidden;
+      flex-shrink: 0;
+    }
+    .unit-toggle button {
+      background: none;
+      border: none;
+      color: var(--t3);
+      padding: 0 1rem;
+      font-size: 0.78rem;
+      font-weight: 800;
+      cursor: pointer;
+      transition: all 0.15s;
+      font-family: inherit;
+      letter-spacing: 0.04em;
+    }
+    .unit-toggle button.active { background: var(--pg); color: #000; }
+
+    /* ── SLIDER ──────────────────────────────────────────────── */
+    .slider-header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 0.75rem; }
+    .slider-big-val { font-size: 1.75rem; font-weight: 900; letter-spacing: -0.04em; color: var(--pg); line-height: 1; }
+    .slider-big-val sub { font-size: 0.7rem; font-weight: 600; color: var(--t2); vertical-align: middle; margin-left: 2px; }
+
+    input[type="range"] {
+      -webkit-appearance: none;
+      width: 100%;
+      height: 5px;
+      background: var(--card3);
+      border-radius: 3px;
+      outline: none;
+      cursor: pointer;
+    }
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 22px; height: 22px;
+      border-radius: 50%;
+      background: var(--pg);
+      cursor: pointer;
+      box-shadow: 0 0 0 4px var(--pg-dim), 0 2px 8px rgba(0,0,0,0.4);
+      transition: box-shadow 0.15s;
+    }
+    input[type="range"]::-webkit-slider-thumb:hover {
+      box-shadow: 0 0 0 8px var(--pg-dim), 0 2px 8px rgba(0,0,0,0.4);
+    }
+    .slider-ticks { display: flex; justify-content: space-between; margin-top: 0.6rem; }
+    .slider-ticks span { font-size: 0.68rem; color: var(--t3); font-weight: 500; }
+
+    /* ── OPTION GRID ─────────────────────────────────────────── */
+    .option-grid { display: grid; gap: 0.65rem; }
+    .option-grid.cols-3 { grid-template-columns: repeat(3, 1fr); }
+    .option-grid.cols-4 { grid-template-columns: repeat(4, 1fr); }
+
+    .option-card {
+      background: var(--card2);
+      border: 1.5px solid var(--border2);
+      border-radius: var(--radius-sm);
+      padding: 1rem 0.75rem;
+      cursor: pointer;
+      transition: all 0.15s;
+      text-align: center;
+      user-select: none;
+    }
+    .option-card:hover { border-color: var(--border3); }
+    .option-card.selected { border-color: var(--pg); background: var(--pg-dim); }
+    .option-card .icon { font-size: 1.4rem; margin-bottom: 0.4rem; }
+    .option-card .label { font-size: 0.82rem; font-weight: 700; color: var(--t2); }
+    .option-card .sublabel { font-size: 0.68rem; color: var(--t3); margin-top: 0.2rem; }
+    .option-card.selected .label { color: var(--pg); }
+
+    /* ── GENERATE BUTTON ─────────────────────────────────────── */
+    .btn-generate {
+      width: 100%;
+      background: var(--pg);
+      color: #000;
+      border: none;
+      border-radius: var(--r-lg);
+      padding: 1.1rem;
+      font-size: 1rem;
+      font-weight: 900;
+      cursor: pointer;
+      letter-spacing: -0.01em;
+      transition: all 0.2s;
+      font-family: inherit;
+      margin-top: 0.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      box-shadow: 0 4px 24px var(--pg-glow);
+    }
+    .btn-generate:hover { filter: brightness(1.1); transform: translateY(-2px); box-shadow: 0 8px 32px var(--pg-glow); }
+    .btn-generate:active { transform: translateY(0); box-shadow: none; }
+    .btn-generate:disabled { opacity: 0.45; cursor: not-allowed; transform: none; box-shadow: none; }
+    .btn-arrow { font-size: 1.1rem; transition: transform 0.2s; }
+    .btn-generate:hover .btn-arrow { transform: translateX(4px); }
+
+    /* ── RESULTS ─────────────────────────────────────────────── */
+    #results { display: none; animation: riseIn 0.45s cubic-bezier(0.22,1,0.36,1) both; }
+    @keyframes riseIn {
+      from { opacity: 0; transform: translateY(18px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .results-divider {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      margin: 2.5rem 0 2rem;
+      font-size: 0.7rem;
+      font-weight: 800;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--t3);
+    }
+    .results-divider::before, .results-divider::after {
+      content: ''; flex: 1; height: 1px; background: var(--border);
+    }
+
+    /* ── CHIPS ───────────────────────────────────────────────── */
+    .chip-row { display: flex; flex-wrap: wrap; gap: 0.6rem; margin-bottom: 1.5rem; }
+    .chip {
+      display: flex; align-items: center; gap: 0.45rem;
+      background: var(--card); border: 1px solid var(--border2);
+      border-radius: 99px; padding: 0.3rem 0.85rem;
+      font-size: 0.75rem; font-weight: 600; color: var(--t2);
+    }
+    .chip-dot { width:7px; height:7px; border-radius:50%; flex-shrink:0; }
+
+    /* ── STAT CARDS ──────────────────────────────────────────── */
+    .stats-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 1rem; margin-bottom: 1.5rem; }
+    .stat-card {
+      background: var(--card); border: 1px solid var(--border2);
+      border-radius: var(--r); padding: 1.1rem 1.2rem;
+    }
+    .stat-label { font-size: 0.62rem; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; color: var(--t3); margin-bottom: 0.6rem; }
+    .stat-value { font-size: 1.55rem; font-weight: 900; letter-spacing: -0.04em; line-height: 1; margin-bottom: 0.3rem; }
+    .stat-value sup { font-size: 0.72rem; font-weight: 600; vertical-align: top; margin-top: 4px; display: inline-block; }
+    .stat-sub { font-size: 0.72rem; color: var(--t3); }
+
+    /* ── METHOD BANNER ───────────────────────────────────────── */
+    .method-banner {
+      border-radius: var(--r-lg);
+      padding: 1.25rem 1.5rem;
+      margin-bottom: 1.5rem;
+      display: flex; gap: 1rem; align-items: flex-start;
+    }
+    .method-icon { font-size: 1.5rem; flex-shrink: 0; line-height: 1; margin-top: 1px; }
+    .method-name { font-size: 0.88rem; font-weight: 800; margin-bottom: 0.35rem; }
+    .method-desc { font-size: 0.8rem; line-height: 1.6; color: var(--t2); }
+
+    /* ── SECTION HEADER ──────────────────────────────────────── */
+    .sec-header { display: flex; align-items: center; gap: 0.65rem; margin-bottom: 1rem; }
+    .sec-num {
+      width: 22px; height: 22px; background: var(--pg); color: #000; border-radius: 50%;
+      font-size: 0.65rem; font-weight: 900; display: flex; align-items: center;
+      justify-content: center; flex-shrink: 0;
+    }
+    .sec-title { font-size: 0.92rem; font-weight: 800; letter-spacing: -0.01em; color: var(--t1); }
+    .sec-sub { font-size: 0.75rem; color: var(--t3); margin-left: auto; }
+
+    /* ── TIMELINE ────────────────────────────────────────────── */
+    .timeline-card {
+      background: var(--card); border: 1px solid var(--border2);
+      border-radius: var(--r-xl); overflow: hidden; margin-bottom: 1.5rem;
+    }
+    .timeline-body { padding: 1.4rem 1.6rem; }
+
+    .phase { display: grid; grid-template-columns: 80px 1fr; gap: 1rem; position: relative; }
+    .phase:not(:last-child) .phase-spine {
+      position: absolute; left: 36px; top: 26px; bottom: -16px;
+      width: 2px; background: var(--border2);
+    }
+    .phase-left { display: flex; flex-direction: column; align-items: center; padding-top: 6px; gap: 5px; }
+    .phase-dot { width:13px; height:13px; border-radius:50%; border:2.5px solid; background:var(--bg); flex-shrink:0; z-index:1; }
+    .phase-week { font-size: 0.62rem; font-weight: 800; color: var(--t3); text-align: center; letter-spacing: 0.04em; text-transform: uppercase; white-space: nowrap; }
+
+    .phase-box {
+      background: var(--card2); border: 1px solid var(--border2);
+      border-radius: 12px; padding: 1rem 1.2rem; margin-bottom: 1rem;
+      transition: border-color 0.2s;
+    }
+    .phase-box:hover { border-color: var(--border3); }
+    .phase-badge {
+      display: inline-block; font-size: 0.62rem; font-weight: 800; letter-spacing: 0.08em;
+      text-transform: uppercase; padding: 0.2rem 0.65rem; border-radius: 99px; margin-bottom: 0.5rem;
+    }
+    .phase-title { font-size: 0.9rem; font-weight: 800; margin-bottom: 0.4rem; color: var(--t1); }
+    .phase-desc { font-size: 0.8rem; color: var(--t2); line-height: 1.65; }
+
+    /* ── EXERCISE CARDS ──────────────────────────────────────── */
+    .exercise-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem; }
+    .exercise-card {
+      background: var(--card); border: 1px solid var(--border2);
+      border-radius: var(--r-lg); padding: 1.25rem; transition: border-color 0.2s;
+    }
+    .exercise-card:hover { border-color: var(--border3); }
+    .ex-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 1rem; gap: 0.5rem; }
+    .ex-name { font-size: 0.95rem; font-weight: 800; letter-spacing: -0.01em; color: var(--t1); }
+    .ex-group {
+      font-size: 0.62rem; font-weight: 700; letter-spacing: 0.07em; text-transform: uppercase;
+      padding: 0.2rem 0.6rem; border-radius: 99px; background: var(--card3); color: var(--t3); flex-shrink: 0; margin-top: 2px;
+    }
+    .ex-rate {
+      font-size: 0.78rem; font-weight: 700; color: var(--pg); background: var(--pg-dim);
+      border: 1px solid rgba(0,255,136,0.22); border-radius: var(--radius-sm);
+      padding: 0.5rem 0.75rem; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.4rem;
+    }
+    .ex-row { display: flex; justify-content: space-between; align-items: center; padding: 0.45rem 0; border-bottom: 1px solid var(--border); font-size: 0.78rem; }
+    .ex-row:last-child { border-bottom: none; }
+    .ex-row-label { color: var(--t3); }
+    .ex-row-val { font-weight: 700; color: var(--t2); }
+    .milestone-bar { margin-top: 1rem; padding-top: 0.75rem; border-top: 1px solid var(--border); }
+    .milestone-labels { display: flex; justify-content: space-between; font-size: 0.7rem; color: var(--t3); margin-bottom: 0.4rem; }
+    .milestone-labels strong { color: var(--t2); }
+    .bar-track { background: var(--card3); border-radius: 99px; height: 5px; overflow: hidden; }
+    .bar-fill { height: 100%; border-radius: 99px; }
+
+    /* ── DELOAD BANNER ───────────────────────────────────────── */
+    .deload-banner {
+      background: linear-gradient(110deg, var(--amber-dim), transparent 70%);
+      border: 1px solid rgba(245,255,0,0.22);
+      border-radius: var(--r-lg);
+      padding: 1.25rem 1.5rem; margin-bottom: 1.5rem;
+      display: flex; gap: 1rem; align-items: flex-start;
+    }
+    .deload-icon { font-size: 1.35rem; flex-shrink: 0; }
+    .deload-title { font-size: 0.85rem; font-weight: 800; color: var(--amber); margin-bottom: 0.3rem; }
+    .deload-desc { font-size: 0.78rem; color: var(--t3); line-height: 1.6; }
+
+    /* ── TIPS ────────────────────────────────────────────────── */
+    .tips-card { background: var(--card); border: 1px solid var(--border2); border-radius: var(--r-xl); overflow: hidden; }
+    .tip-item { display: flex; gap: 0.85rem; padding: 1rem 1.5rem; border-bottom: 1px solid var(--border); transition: background 0.15s; }
+    .tip-item:last-child { border-bottom: none; }
+    .tip-item:hover { background: var(--card2); }
+    .tip-icon { font-size: 1rem; flex-shrink: 0; margin-top: 1px; }
+    .tip-text { font-size: 0.8rem; color: var(--t2); line-height: 1.65; }
+    .tip-text strong { color: var(--t1); font-weight: 700; }
+
+    /* ── PLANNER BOTTOM NAV ──────────────────────────────────── */
+    #plan-nav {
+      position: fixed; bottom: 0; left: 0; right: 0;
+      display: flex;
+      background: rgba(4,7,15,.98);
+      backdrop-filter: blur(40px) saturate(200%);
+      -webkit-backdrop-filter: blur(40px) saturate(200%);
+      border-top: 1px solid rgba(0,229,255,.10);
+      padding-bottom: calc(4px + env(safe-area-inset-bottom));
+      z-index: 20;
+    }
+    #plan-nav a {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 3px;
+      padding: 10px 4px 6px;
+      color: var(--t3);
+      text-decoration: none;
+      font-size: 0.53rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.65px;
+      position: relative;
+    }
+    #plan-nav a svg {
+      width: 23px; height: 23px; stroke: currentColor; fill: none;
+      stroke-width: 1.75; stroke-linecap: round; stroke-linejoin: round;
+      transition: transform 0.28s cubic-bezier(.34,1.56,.64,1);
+    }
+    #plan-nav a.on { color: var(--accent); }
+    #plan-nav a.on svg { transform: translateY(-2px) scale(1.12); }
+    #plan-nav a.on::after {
+      content: ''; position: absolute; top: 6px; left: 50%;
+      transform: translateX(-50%); width: 44px; height: 36px;
+      background: rgba(0,229,255,.12); border-radius: 14px; z-index: -1;
+    }
+    #plan-nav a.on::before {
+      content: ''; position: absolute; top: 0; left: 50%;
+      transform: translateX(-50%); width: 32px; height: 3px;
+      background: var(--grad); border-radius: 0 0 5px 5px;
+      box-shadow: 0 0 18px rgba(0,229,255,1), 0 0 36px rgba(0,229,255,.5);
+    }
+
+    /* ── RESPONSIVE ──────────────────────────────────────────── */
+    @media (max-width: 640px) {
+      .form-row { grid-template-columns: 1fr; }
+      .option-grid.cols-3 { grid-template-columns: 1fr 1fr; }
+      .option-grid.cols-4 { grid-template-columns: 1fr 1fr; }
+      .stats-grid { grid-template-columns: 1fr; }
+      .exercise-grid { grid-template-columns: 1fr; }
+      .form-section { padding: 1.25rem 1.25rem; }
+      .container { padding: 0 1rem 2rem; }
+      .hero { padding: 2rem 1rem 1.5rem; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header>
+  <div class="logo">RepUp</div>
+  <div style="font-size:.72rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;
+    color:var(--pg);background:rgba(0,255,136,.1);border:1px solid rgba(0,255,136,.25);
+    padding:.3rem .85rem;border-radius:99px;">Overload Planner</div>
+</header>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-eyebrow">
+    <div class="dot"></div>
+    Science-backed progression
+  </div>
+  <h1>Know exactly when to <span>add weight</span></h1>
+  <p>Enter your stats and goals — we'll give you a realistic, week-by-week overload roadmap built around how your body actually adapts.</p>
+</section>
+
+<div class="container">
+
+  <!-- FORM -->
+  <div class="form-card">
+
+    <!-- Stats -->
+    <div class="form-section">
+      <div class="section-eyebrow">01 — Your Stats</div>
+      <div class="form-row">
+        <div class="form-group">
+          <label for="weight">Body Weight</label>
+          <div class="input-row">
+            <input type="number" id="weight" placeholder="175" min="50" max="700"/>
+            <div class="unit-toggle">
+              <button id="btn-lbs" class="active" onclick="setUnit('lbs')">lbs</button>
+              <button id="btn-kg" onclick="setUnit('kg')">kg</button>
+            </div>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Training Frequency</label>
+          <div class="slider-header">
+            <span style="font-size:.73rem;color:var(--t3);">Days per week</span>
+            <div class="slider-big-val" id="freq-val">3<sub>days/wk</sub></div>
+          </div>
+          <input type="range" id="frequency" min="2" max="6" value="3" step="1"
+            oninput="updateFreq(this.value)"/>
+          <div class="slider-ticks">
+            <span>2</span><span>3</span><span>4</span><span>5</span><span>6</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Experience -->
+    <div class="form-section">
+      <div class="section-eyebrow">02 — Experience Level</div>
+      <div class="option-grid cols-3" id="exp-grid">
+        <div class="option-card selected" data-val="beginner" onclick="pick('exp-grid',this)">
+          <div class="icon">🌱</div>
+          <div class="label">Beginner</div>
+          <div class="sublabel">0 – 1 year</div>
+        </div>
+        <div class="option-card" data-val="intermediate" onclick="pick('exp-grid',this)">
+          <div class="icon">💪</div>
+          <div class="label">Intermediate</div>
+          <div class="sublabel">1 – 3 years</div>
+        </div>
+        <div class="option-card" data-val="advanced" onclick="pick('exp-grid',this)">
+          <div class="icon">🏆</div>
+          <div class="label">Advanced</div>
+          <div class="sublabel">3+ years</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Goal -->
+    <div class="form-section">
+      <div class="section-eyebrow">03 — Primary Goal</div>
+      <div class="option-grid cols-4" id="goal-grid">
+        <div class="option-card selected" data-val="strength" onclick="pick('goal-grid',this)">
+          <div class="icon">🏋️</div>
+          <div class="label">Strength</div>
+          <div class="sublabel">1RM &amp; raw power</div>
+        </div>
+        <div class="option-card" data-val="hypertrophy" onclick="pick('goal-grid',this)">
+          <div class="icon">🫀</div>
+          <div class="label">Muscle Size</div>
+          <div class="sublabel">Volume &amp; density</div>
+        </div>
+        <div class="option-card" data-val="endurance" onclick="pick('goal-grid',this)">
+          <div class="icon">⚡</div>
+          <div class="label">Endurance</div>
+          <div class="sublabel">Work capacity</div>
+        </div>
+        <div class="option-card" data-val="fatloss" onclick="pick('goal-grid',this)">
+          <div class="icon">🔥</div>
+          <div class="label">Fat Loss</div>
+          <div class="sublabel">Lean &amp; defined</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Generate -->
+    <div class="form-section">
+      <button class="btn-generate" id="gen-btn" onclick="generate()">
+        Generate My Overload Plan <span class="btn-arrow">→</span>
+      </button>
+    </div>
+
+  </div><!-- /form-card -->
+
+  <!-- RESULTS -->
+  <div id="results"></div>
+
+</div><!-- /container -->
+
+<!-- BOTTOM NAV -->
+<nav id="plan-nav">
+  <a href="repup.html">
+    <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+    Home
+  </a>
+  <a href="repup.html#history">
+    <svg viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+    History
+  </a>
+  <a href="repup.html#tools">
+    <svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+    Tools
+  </a>
+  <a href="planner.html" class="on">
+    <svg viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/><line x1="18" y1="6" x2="22" y2="2"/><line x1="18" y1="6" x2="14" y2="6"/></svg>
+    Plan
+  </a>
+  <a href="repup.html#profile">
+    <svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+    Profile
+  </a>
+</nav>
+
+<script>
+'use strict';
+
+let unit = 'lbs';
+
+function setUnit(u) {
+  unit = u;
+  document.getElementById('btn-lbs').classList.toggle('active', u === 'lbs');
+  document.getElementById('btn-kg').classList.toggle('active', u === 'kg');
+}
+
+function updateFreq(v) {
+  document.getElementById('freq-val').innerHTML = v + '<sub>days/wk</sub>';
+}
+
+function pick(gridId, el) {
+  document.querySelectorAll('#' + gridId + ' .option-card').forEach(function(c) { c.classList.remove('selected'); });
+  el.classList.add('selected');
+}
+
+function getSelected(gridId) {
+  var el = document.querySelector('#' + gridId + ' .option-card.selected');
+  return el ? el.dataset.val : null;
+}
+
+function generate() {
+  var raw = parseFloat(document.getElementById('weight').value);
+  var frequency = parseInt(document.getElementById('frequency').value);
+  var experience = getSelected('exp-grid');
+  var goal = getSelected('goal-grid');
+  var weightIn = document.getElementById('weight');
+
+  if (!raw || isNaN(raw) || raw < 50) {
+    weightIn.classList.add('error');
+    weightIn.focus();
+    setTimeout(function() { weightIn.classList.remove('error'); }, 2200);
+    return;
+  }
+
+  var bwLbs = unit === 'kg' ? raw * 2.205 : raw;
+  var plan = buildPlan(bwLbs, frequency, experience, goal);
+  var disp = raw + ' ' + unit;
+  renderResults(plan, disp, frequency, experience, goal);
+
+  var el = document.getElementById('results');
+  el.style.display = 'block';
+  el.style.animation = 'none';
+  void el.offsetHeight;
+  el.style.animation = '';
+  el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function buildPlan(bwLbs, freq, exp, goal) {
+  var sessionBase = {
+    beginner:     { upper: 5,    lower: 10  },
+    intermediate: { upper: 2.5,  lower: 5   },
+    advanced:     { upper: 1.25, lower: 2.5 },
+  }[exp];
+
+  var freqMod = { 2: 0.55, 3: 0.75, 4: 1.0, 5: 1.05, 6: 0.9 }[freq] || 1.0;
+  var weeklyUpper = sessionBase.upper * freqMod;
+  var weeklyLower = sessionBase.lower * freqMod;
+
+  var goalProfiles = {
+    strength: {
+      name: 'Strength', method: 'Linear Weight Progression',
+      methodDesc: 'Add load to the bar as the primary overload variable. Reps stay low (3–5). You earn the right to add weight by completing all prescribed reps — if you miss reps, repeat the weight next session.',
+      icon: '📈', iconBg: 'linear-gradient(135deg,rgba(255,0,85,.12),transparent)',
+      border: 'rgba(255,0,85,.25)', nameColor: 'var(--rose-p)',
+      repRange: '3–5 reps', sets: '4–6 sets', rest: '3–5 min', rpe: '8–9',
+      priority: 'weight',
+      deloadEvery: exp === 'advanced' ? 3 : exp === 'intermediate' ? 4 : 6,
+    },
+    hypertrophy: {
+      name: 'Muscle Growth', method: 'Double Progression',
+      methodDesc: 'First chase reps (hit 8, chase 12 reps across all sets). Only once you reach the top of your rep range do you add weight and reset to the bottom. This prevents premature load jumps and ensures quality stimulus.',
+      icon: '🔮', iconBg: 'linear-gradient(135deg,rgba(191,0,255,.12),transparent)',
+      border: 'rgba(191,0,255,.25)', nameColor: 'var(--pur-p)',
+      repRange: '8–12 reps', sets: '3–5 sets', rest: '60–90 sec', rpe: '7–8',
+      priority: 'reps-first',
+      deloadEvery: exp === 'advanced' ? 4 : 5,
+    },
+    endurance: {
+      name: 'Endurance', method: 'Set Progression',
+      methodDesc: 'Overload by adding sets or shortening rest before ever adding weight. Start at 2 sets, work up to 4–5 sets over weeks. Only once you hit your set ceiling do you add weight and drop back down.',
+      icon: '⏱️', iconBg: 'linear-gradient(135deg,rgba(0,229,255,.12),transparent)',
+      border: 'rgba(0,229,255,.25)', nameColor: 'var(--cy-p)',
+      repRange: '15–20 reps', sets: '2–4 sets', rest: '30–60 sec', rpe: '6–7',
+      priority: 'sets-first',
+      deloadEvery: 6,
+    },
+    fatloss: {
+      name: 'Fat Loss', method: 'Density Progression',
+      methodDesc: 'Overload by doing more total work in the same time window — circuit-style, shorter rest, or extra rounds. Maintaining (not increasing) weight is the goal here. Nutrition is your primary fat-loss lever.',
+      icon: '🔥', iconBg: 'linear-gradient(135deg,rgba(245,255,0,.10),transparent)',
+      border: 'rgba(245,255,0,.22)', nameColor: 'var(--amber)',
+      repRange: '10–15 reps', sets: '3–4 sets', rest: '45–75 sec', rpe: '7–8',
+      priority: 'density',
+      deloadEvery: 5,
+    },
+  }[goal];
+
+  var exercises = buildExercises(weeklyUpper, weeklyLower, goalProfiles);
+  var phases = buildTimeline(exp, goal, goalProfiles, weeklyUpper, weeklyLower);
+
+  var overloadCadence = exp === 'beginner' ? 'Each session'
+    : exp === 'intermediate' ? 'Every week'
+    : 'Every 2–4 weeks';
+
+  return { exercises, phases, goalProfiles, weeklyUpper, weeklyLower, overloadCadence, freq, exp, goal };
+}
+
+function buildExercises(weeklyUpper, weeklyLower, gp) {
+  var factor = unit === 'kg' ? 1 / 2.205 : 1;
+  var unitLabel = unit;
+
+  var lifts = [
+    { name: 'Bench Press',    group: 'Push', base: weeklyUpper },
+    { name: 'Back Squat',     group: 'Legs', base: weeklyLower },
+    { name: 'Overhead Press', group: 'Push', base: weeklyUpper * 0.7 },
+    { name: 'Deadlift',       group: 'Pull', base: weeklyLower * 1.15 },
+  ];
+
+  return lifts.map(function(l) {
+    var incLbs = l.base;
+    var incDisp = round125(incLbs * factor);
+    var w4 = Math.round(incDisp * 4 * 10) / 10;
+    var w8 = Math.round(incDisp * 8 * 10) / 10;
+
+    var rateLabel;
+    if (gp.priority === 'weight')      rateLabel = '+' + incDisp + ' ' + unitLabel + ' / week';
+    else if (gp.priority === 'reps-first') rateLabel = '+1 rep/week → then +' + incDisp + ' ' + unitLabel;
+    else if (gp.priority === 'sets-first') rateLabel = '+1 set / 2 weeks → then +' + incDisp + ' ' + unitLabel;
+    else rateLabel = '−5 sec rest/week → then +' + incDisp + ' ' + unitLabel;
+
+    return Object.assign({}, l, {
+      incDisp, rateLabel, w4, w8, unitLabel,
+      barPct: Math.min(100, Math.max(5, (incDisp / (unit === 'kg' ? 4.5 : 10)) * 100)),
+    });
+  });
+}
+
+function round125(n) {
+  return Math.round(n / 1.25) * 1.25;
+}
+
+function buildTimeline(exp, goal, gp, wu, wl) {
+  var phases = [];
+  var colors = {
+    blue:   { c: 'var(--blue-p)',  bg: 'var(--blue-dim)',  border: 'rgba(0,167,255,.25)' },
+    green:  { c: 'var(--pg)',      bg: 'var(--pg-dim)',    border: 'rgba(0,255,136,.25)' },
+    amber:  { c: 'var(--amber)',   bg: 'var(--amber-dim)', border: 'rgba(245,255,0,.22)' },
+    rose:   { c: 'var(--rose-p)',  bg: 'var(--rose-dim)',  border: 'rgba(255,0,85,.25)'  },
+    purple: { c: 'var(--pur-p)',   bg: 'var(--pur-dim)',   border: 'rgba(191,0,255,.25)' },
+    cyan:   { c: 'var(--cy-p)',    bg: 'var(--cy-dim)',    border: 'rgba(0,229,255,.25)' },
+  };
+
+  function push(weekRange, title, badge, colorKey, desc) {
+    phases.push(Object.assign({ weekRange, title, badge, desc }, colors[colorKey]));
+  }
+
+  if (exp === 'beginner') {
+    push('Wk 1–2', 'Foundation',       'Learn',    'blue',
+      'Your only job is moving correctly. Keep every set at RPE 5–6 — it should feel easy. Master the squat, hinge, press, and row patterns. Progression comes from skill, not suffering, at this stage.');
+    push('Wk 3–4', 'First Overload',    'Load',     'green',
+      'Add ' + wu.toFixed(1) + ' lbs to upper lifts and ' + wl.toFixed(1) + ' lbs to lower lifts before each session. You should be able to do this every single workout. Bump RPE to 7–8 on working sets. If you fail a rep, don\'t add weight next session.');
+    push('Wk 5–8', 'Linear Progression','Build',    'green',
+      'Continue adding weight each session. By week 8 you\'ll have added ' + (wu*4).toFixed(0) + '–' + (wu*6).toFixed(0) + ' lbs to upper body and ' + (wl*4).toFixed(0) + '–' + (wl*6).toFixed(0) + ' lbs to lower. Progress will start to slow — this is normal.');
+    push('Wk ' + gp.deloadEvery, 'Deload Week', 'Recovery', 'amber',
+      'Drop to 50–60% of your working weight. Prioritize technique, not effort. Your nervous system repairs during deloads — skipping this stalls progress and raises injury risk.');
+    push('Wk 9–12', 'Transition to Weekly', 'Adapt', 'blue',
+      'Daily progress stalls for most people here. Switch to weekly progression: one weight increase per exercise per week. This is normal — you\'re entering the intermediate stage faster than most.');
+
+  } else if (exp === 'intermediate') {
+    push('Wk 1–2', 'Controlled Reset',    'Baseline', 'blue',
+      'Start 10–15% below your current working max. This isn\'t weakness — it\'s strategic. Volume tolerance is rebuilt safely, reducing injury risk heading into the heavier weeks.');
+    push('Wk 3–4', 'Loading Phase',        'Load',     'green',
+      goal === 'hypertrophy'
+        ? 'Use double progression: target ' + gp.repRange + ' each set. Once you hit the top of the rep range across all sets, add ' + wu.toFixed(1) + ' lbs next session. Never skip the rep step.'
+        : 'Add ' + wu.toFixed(1) + ' lbs (upper) and ' + wl.toFixed(1) + ' lbs (lower) per week. Work at RPE 7–8 on all top sets. Miss reps? Repeat the weight, don\'t reduce it.');
+    push('Wk 5–8', 'Volume Accumulation', 'Volume',   'purple',
+      'Add 1 working set every 2 weeks. By week 8, expect total load to be ' + (wu*5).toFixed(0) + '+ lbs higher on upper body lifts. RPE should creep toward 8–9. If it doesn\'t, you\'re leaving progress on the table.');
+    push('Wk ' + gp.deloadEvery, 'Planned Deload', 'Recovery', 'amber',
+      'Cut volume by 50%, keep weights at 60–70% of max. Active recovery: walks, mobility, and sleep. This week determines how strong your next block will be.');
+    push('Wk 9–12', 'Intensification', 'Peak', 'rose',
+      'Reduce sets, increase weight (80–90%+ 1RM). RPE 8–9+ across the board. Week 12: attempt a new PR on your primary lifts. The volume from weeks 1–8 built the foundation; now you express it.');
+
+  } else {
+    push('Wk 1–3', 'Hypertrophy Block', 'Accumulate', 'blue',
+      'High volume, moderate intensity (65–75% 1RM). 4–6 sets of 8–12 reps. Add 1 set per week. Overload is through volume, not load. This phase builds the muscle cross-section that the next phase will strengthen.');
+    push('Wk 4–6', 'Strength Block',    'Intensify',  'green',
+      'Drop volume, raise intensity (80–87% 1RM). Add ' + wu.toFixed(1) + ' lbs/week to upper, ' + wl.toFixed(1) + ' lbs/week to lower. Work sets at RPE 8–9. This is where true progressive overload happens for advanced athletes.');
+    push('Wk ' + gp.deloadEvery, 'Deload', 'Recovery', 'amber',
+      '40–50% of working weight. You may also take 3–5 full rest days. Advanced athletes accumulate CNS fatigue faster — this week is mission-critical, not optional.');
+    push('Wk 7–9', 'Peaking Block',    'Peak',       'rose',
+      'Explosive low-rep work (90%+ 1RM, 1–3 reps). Cluster sets, pause reps, accommodating resistance if available. One PR attempt per major lift in week 9.');
+    push('Wk 10–12', 'New Mesocycle', 'Cycle',      'cyan',
+      'Return to a hypertrophy block, but your baseline load is now higher. Progressive overload for advanced athletes is measured in cycles, not weeks. Each loop of the spiral lifts the floor.');
+  }
+
+  return phases;
+}
+
+function renderResults(plan, dispWeight, freq, exp, goal) {
+  var exercises = plan.exercises;
+  var phases = plan.phases;
+  var gp = plan.goalProfiles;
+  var weeklyUpper = plan.weeklyUpper;
+  var overloadCadence = plan.overloadCadence;
+  var dispFactor = unit === 'kg' ? 1 / 2.205 : 1;
+
+  var expLabel  = { beginner: 'Beginner', intermediate: 'Intermediate', advanced: 'Advanced' }[exp];
+  var goalLabel = gp.name;
+
+  var chipColors = {
+    beginner: '#00A7FF', intermediate: '#00FF88', advanced: '#F5FF00',
+    strength: '#FF0055', hypertrophy: '#BF00FF', endurance: '#00E5FF', fatloss: '#F5FF00',
+  };
+
+  var html = '<div class="results-divider">Your Plan</div>'
+    + '<div class="chip-row">'
+    + '<div class="chip"><div class="chip-dot" style="background:' + chipColors[exp] + '"></div>' + expLabel + '</div>'
+    + '<div class="chip"><div class="chip-dot" style="background:' + chipColors[goal] + '"></div>' + goalLabel + '</div>'
+    + '<div class="chip"><div class="chip-dot" style="background:var(--t3)"></div>' + freq + ' days / week</div>'
+    + '<div class="chip"><div class="chip-dot" style="background:var(--t3)"></div>' + dispWeight + '</div>'
+    + '</div>'
+
+    + '<div class="stats-grid">'
+    + '<div class="stat-card"><div class="stat-label">First Overload</div>'
+    + '<div class="stat-value" style="color:var(--pg);font-size:clamp(.9rem,2.5vw,1.35rem)">' + overloadCadence + '</div>'
+    + '<div class="stat-sub">How often you add weight</div></div>'
+    + '<div class="stat-card"><div class="stat-label">4-Week Upper Gain</div>'
+    + '<div class="stat-value" style="color:var(--blue-p)">+' + (weeklyUpper * 4 * dispFactor).toFixed(1) + '<sup>' + unit + '</sup></div>'
+    + '<div class="stat-sub">Expected load added to upper lifts</div></div>'
+    + '<div class="stat-card"><div class="stat-label">Deload Every</div>'
+    + '<div class="stat-value" style="color:var(--amber)">' + gp.deloadEvery + '<sup style="font-size:.72rem;font-weight:600;color:var(--t3)">wk</sup></div>'
+    + '<div class="stat-sub">Planned recovery block</div></div>'
+    + '</div>'
+
+    + '<div class="method-banner" style="background:' + gp.iconBg + ';border:1px solid ' + gp.border + '">'
+    + '<div class="method-icon">' + gp.icon + '</div>'
+    + '<div><div class="method-name" style="color:' + gp.nameColor + '">' + gp.method + '</div>'
+    + '<div class="method-desc">' + gp.methodDesc + '</div></div></div>'
+
+    + '<div class="deload-banner"><div class="deload-icon">⚡</div>'
+    + '<div><div class="deload-title">Deload every ' + gp.deloadEvery + ' weeks — non-negotiable</div>'
+    + '<div class="deload-desc">A deload is 1 week at 50–60% of your working weights. It\'s not weakness — it\'s when your muscles, tendons, and nervous system catch up to the training stimulus. Skipping deloads is the #1 reason intermediate athletes plateau and get hurt.</div>'
+    + '</div></div>'
+
+    + '<div class="sec-header"><div class="sec-num">1</div><div class="sec-title">12-Week Timeline</div><div class="sec-sub">' + expLabel + ' track</div></div>'
+    + '<div class="timeline-card"><div class="timeline-body">'
+    + phases.map(function(p) {
+        return '<div class="phase">'
+          + '<div class="phase-spine"></div>'
+          + '<div class="phase-left"><div class="phase-dot" style="border-color:' + p.c + ';box-shadow:0 0 8px ' + p.c + '55"></div>'
+          + '<div class="phase-week">' + p.weekRange + '</div></div>'
+          + '<div class="phase-box"><div class="phase-badge" style="color:' + p.c + ';background:' + p.bg + ';border:1px solid ' + p.border + '">' + p.badge + '</div>'
+          + '<div class="phase-title">' + p.title + '</div>'
+          + '<div class="phase-desc">' + p.desc + '</div></div></div>';
+      }).join('')
+    + '</div></div>'
+
+    + '<div class="sec-header"><div class="sec-num">2</div><div class="sec-title">Exercise Progression Targets</div><div class="sec-sub">Big 4 lifts</div></div>'
+    + '<div class="exercise-grid">'
+    + exercises.map(function(ex) {
+        return '<div class="exercise-card">'
+          + '<div class="ex-header"><div class="ex-name">' + ex.name + '</div><div class="ex-group">' + ex.group + '</div></div>'
+          + '<div class="ex-rate">📊 ' + ex.rateLabel + '</div>'
+          + '<div class="ex-row"><span class="ex-row-label">Rep range</span><span class="ex-row-val">' + gp.repRange + '</span></div>'
+          + '<div class="ex-row"><span class="ex-row-label">Working sets</span><span class="ex-row-val">' + gp.sets + '</span></div>'
+          + '<div class="ex-row"><span class="ex-row-label">Rest period</span><span class="ex-row-val">' + gp.rest + '</span></div>'
+          + '<div class="ex-row"><span class="ex-row-label">Target RPE</span><span class="ex-row-val">' + gp.rpe + '</span></div>'
+          + '<div class="milestone-bar">'
+          + '<div class="milestone-labels"><span>4 wk: <strong>+' + ex.w4 + ' ' + ex.unitLabel + '</strong></span><span>8 wk: <strong>+' + ex.w8 + ' ' + ex.unitLabel + '</strong></span></div>'
+          + '<div class="bar-track"><div class="bar-fill" style="width:' + ex.barPct + '%;background:linear-gradient(90deg,var(--pg),#00CC6A)"></div></div>'
+          + '</div></div>';
+      }).join('')
+    + '</div>'
+
+    + '<div class="sec-header"><div class="sec-num">3</div><div class="sec-title">Rules for Your Progression</div></div>'
+    + '<div class="tips-card">' + buildTips(exp, goal, gp, freq) + '</div>';
+
+  document.getElementById('results').innerHTML = html;
+}
+
+function buildTips(exp, goal, gp, freq) {
+  var tips = [];
+  tips.push({ icon: '📋', text: '<strong>Track every session, no exceptions.</strong> Log the date, exercise, sets, reps, and weight. You cannot progressively overload what you don\'t measure. A spreadsheet, a notebook, or a phone note — pick one and use it every time.' });
+
+  if (goal === 'strength') {
+    tips.push({ icon: '⚖️', text: '<strong>Failed reps = repeat the weight.</strong> If you can\'t complete all reps at a given weight, repeat that exact weight next session. Only move up when every set is completed with solid form.' });
+    tips.push({ icon: '🏋️', text: '<strong>Focus on the big 4.</strong> Squat, bench, deadlift, and overhead press drive 80% of strength gains. Accessories fill gaps — they don\'t replace the compounds.' });
+  } else if (goal === 'hypertrophy') {
+    tips.push({ icon: '📈', text: '<strong>Never rush the weight increase.</strong> Double progression means you earn more reps before you earn more weight. Jumping load too early cuts stimulus short and stalls real hypertrophy.' });
+    tips.push({ icon: '🐢', text: '<strong>Slow the eccentric down.</strong> A 3–4 second descent increases time under tension and hypertrophic stimulus without requiring heavier weights. Form over ego, always.' });
+  } else if (goal === 'endurance') {
+    tips.push({ icon: '⏱️', text: '<strong>Rest time is a training variable.</strong> Shortening rest periods is overload just like adding weight. Track your rest intervals just as carefully as your reps and sets.' });
+    tips.push({ icon: '🚴', text: '<strong>Pair with Zone 2 cardio.</strong> Two to three 20–40 minute sessions of conversational-pace cardio per week dramatically improves your work capacity and recovery between sets.' });
+  } else if (goal === 'fatloss') {
+    tips.push({ icon: '🍽️', text: '<strong>The deficit drives fat loss — not the workout.</strong> No progressive overload plan replaces a controlled caloric deficit. Aim to lose 0.5–1% of body weight per week to preserve muscle while shedding fat.' });
+    tips.push({ icon: '💪', text: '<strong>Keep lifting heavy, always.</strong> The most common fat-loss mistake is going lighter and doing more reps. Maintain intensity and reduce calories — that\'s what preserves lean mass during a cut.' });
+  }
+
+  if (freq <= 3) {
+    tips.push({ icon: '😴', text: '<strong>Recovery is your competitive advantage.</strong> Training ' + freq + ' days per week puts more pressure on each individual session. Prioritize 7–9 hours of sleep and hit 0.7–1 g of protein per lb of body weight daily.' });
+  } else {
+    tips.push({ icon: '⚠️', text: '<strong>Watch for cumulative fatigue.</strong> At ' + freq + ' sessions per week, fatigue stacks fast. If your strength drops for two or more consecutive sessions, insert an unplanned light day before your next planned deload.' });
+  }
+
+  if (exp === 'advanced') tips.push({ icon: '🔄', text: '<strong>Periodization is no longer optional.</strong> Linear progression is exhausted. Structure training in deliberate 4–8 week mesocycles: accumulation → intensification → realization → deload. Repeat at a new floor.' });
+  if (exp === 'beginner') tips.push({ icon: '🧠', text: '<strong>Technique is the only thing that matters right now.</strong> A heavier squat with bad form is strictly worse than a lighter squat with perfect form. Video yourself. Get eyes on your movement before chasing numbers.' });
+
+  tips.push({ icon: '🩺', text: '<strong>Sharp pain means stop immediately.</strong> Muscle burn and soreness are fine. Sharp joint pain, tendon pain, or numbness means something is wrong. Train around injuries by modifying exercises — never train through structural pain.' });
+
+  return tips.map(function(t) {
+    return '<div class="tip-item"><div class="tip-icon">' + t.icon + '</div><div class="tip-text">' + t.text + '</div></div>';
+  }).join('');
+}
+
+document.getElementById('weight').addEventListener('keydown', function(e) {
+  if (e.key === 'Enter') generate();
+});
+</script>
+</body>
+</html>

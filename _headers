@@ -1,0 +1,14 @@
+/*
+  X-Content-Type-Options: nosniff
+
+/*.html
+  Cache-Control: no-cache, no-store, must-revalidate
+  Pragma: no-cache
+
+/sw.js
+  Cache-Control: no-cache, no-store, must-revalidate
+  Pragma: no-cache
+
+/style.css
+  Cache-Control: no-cache, no-store, must-revalidate
+  Pragma: no-cache

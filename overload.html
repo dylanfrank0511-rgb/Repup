@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
+  <title>RepUp — Overload Alerts</title>
+  <meta name="apple-mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+  <meta name="theme-color" content="#00E5FF"/>
+  <link rel="icon" type="image/svg+xml" href="icon.svg"/>
+  <link rel="stylesheet" href="style.css?v=19"/>
+  <style>
+    /* ── SUMMARY STRIP ── */
+    .summary-strip{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-bottom:18px}
+    .sum-card{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:13px 10px;text-align:center}
+    .sum-val{font-size:1.45rem;font-weight:900;letter-spacing:-.3px;line-height:1}
+    .sum-lbl{font-size:.58rem;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin-top:4px}
+
+    /* ── ALERT CARDS ── */
+    .alert-card{background:var(--card);border-radius:var(--r);padding:15px 16px;margin-bottom:10px;display:flex;align-items:flex-start;gap:13px;border-left:3px solid transparent;transition:border-color .18s}
+    .alert-card.warn{border-color:#F5FF00;border:1px solid rgba(245,255,0,.28);border-left:3px solid #F5FF00;background:rgba(245,255,0,.04)}
+    .alert-card.danger{border-color:#FF6B35;border:1px solid rgba(255,107,53,.28);border-left:3px solid #FF6B35;background:rgba(255,107,53,.04)}
+    .alert-card.critical{border-color:#FF00AA;border:1px solid rgba(255,0,170,.28);border-left:3px solid #FF00AA;background:rgba(255,0,170,.04)}
+
+    .alert-icon{font-size:1.6rem;flex-shrink:0;line-height:1;margin-top:1px}
+    .alert-body{flex:1;min-width:0}
+    .alert-name{font-size:.95rem;font-weight:800;letter-spacing:-.1px;margin-bottom:3px}
+    .alert-meta{font-size:.74rem;color:var(--muted);margin-bottom:7px;line-height:1.5}
+    .alert-tags{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:8px}
+    .alert-tag{font-size:.65rem;font-weight:700;padding:3px 9px;border-radius:99px;border:1px solid var(--border2);color:var(--text2);white-space:nowrap}
+    .alert-tag.suggest{background:rgba(0,229,255,.1);border-color:rgba(0,229,255,.3);color:var(--accent)}
+    .alert-streak{font-size:.7rem;font-weight:800;text-transform:uppercase;letter-spacing:.5px;padding:2px 9px;border-radius:99px;flex-shrink:0;margin-top:2px}
+    .streak-warn{background:rgba(245,255,0,.15);color:#F5FF00;border:1px solid rgba(245,255,0,.3)}
+    .streak-danger{background:rgba(255,107,53,.15);color:#FF6B35;border:1px solid rgba(255,107,53,.3)}
+    .streak-critical{background:rgba(255,0,170,.15);color:#FF00AA;border:1px solid rgba(255,0,170,.3)}
+
+    .history-mini{margin-top:8px;display:flex;gap:4px;align-items:flex-end;height:28px}
+    .hbar{background:rgba(0,229,255,.18);border-radius:3px;flex:1;min-width:8px;transition:background .2s;position:relative}
+    .hbar.same{background:rgba(245,255,0,.25)}
+    .hbar.up{background:rgba(90,254,154,.4)}
+    .hbar:last-child.same,.hbar:last-child.up{background:rgba(90,254,154,.6)}
+
+    /* ── FILTER ROW ── */
+    .filter-row{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;margin-bottom:14px;scrollbar-width:none}
+    .filter-row::-webkit-scrollbar{display:none}
+    .fbtn{flex-shrink:0;padding:6px 13px;border-radius:99px;font-size:.76rem;font-weight:700;border:1.5px solid var(--border2);background:transparent;color:var(--muted);cursor:pointer;transition:all .18s;font-family:inherit;touch-action:manipulation;-webkit-user-select:none;user-select:none;white-space:nowrap}
+    .fbtn.on{background:var(--grad);color:#fff;border-color:transparent;box-shadow:var(--sh-accent)}
+
+    /* ── EMPTY STATE ── */
+    .no-data{text-align:center;padding:48px 20px;color:var(--muted);font-size:.84rem;line-height:1.8}
+    .no-data-i{font-size:2.6rem;margin-bottom:10px;display:block}
+
+    /* ── SECTION LABEL ── */
+    .sec-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+    .sec{font-size:.65rem;font-weight:800;text-transform:uppercase;letter-spacing:.7px;color:var(--muted)}
+
+    /* ── ON-TRACK ── */
+    .ontrack-card{background:var(--card);border:1px solid rgba(90,254,154,.2);border-radius:var(--r);padding:13px 15px;margin-bottom:8px;display:flex;align-items:center;gap:12px}
+    .ontrack-name{flex:1;font-size:.88rem;font-weight:700}
+    .ontrack-meta{font-size:.72rem;color:var(--muted)}
+    .ontrack-badge{font-size:.65rem;font-weight:800;padding:2px 8px;border-radius:99px;background:rgba(90,254,154,.12);color:var(--green);border:1px solid rgba(90,254,154,.25);white-space:nowrap}
+
+    /* ── THRESHOLD NOTE ── */
+    .threshold-note{background:rgba(0,229,255,.06);border:1px solid var(--border);border-radius:var(--r-sm);padding:11px 14px;margin-bottom:16px;font-size:.75rem;color:var(--muted);line-height:1.6}
+    .threshold-note b{color:var(--accent)}
+  </style>
+</head>
+<body>
+<div id="app">
+  <header>
+    <div style="display:flex;align-items:center;gap:11px">
+      <a href="./repup.html" class="dbk" style="text-decoration:none;display:flex;align-items:center;justify-content:center">←</a>
+      <div class="logo" style="font-size:1.3rem">Overload Alerts</div>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px">
+      <span id="profile-badge" style="font-size:.7rem;color:var(--muted)"></span>
+    </div>
+  </header>
+
+  <main id="mscroll" style="padding:14px 16px 32px">
+    <div id="summary-strip" class="summary-strip"></div>
+
+    <div class="threshold-note">
+      Alerts fire when an exercise hasn't gained weight or reps across <b>3+ logged sessions</b>. Stagnation for <b>5+</b> sessions is Danger; <b>7+</b> is Critical.
+    </div>
+
+    <div class="filter-row" id="filter-row">
+      <button class="fbtn on" data-filter="all">All</button>
+      <button class="fbtn" data-filter="critical">Critical</button>
+      <button class="fbtn" data-filter="danger">Danger</button>
+      <button class="fbtn" data-filter="warn">Warning</button>
+      <button class="fbtn" data-filter="ontrack">On Track</button>
+    </div>
+
+    <div id="alerts-container"></div>
+    <div id="ontrack-container" class="hidden"></div>
+  </main>
+</div>
+
+<script>
+var ge = function(id){ return document.getElementById(id); };
+var esc = function(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];}); };
+
+/* ── Load state ── */
+var PK = 'ru3-profiles', AK = 'ru3-active';
+function getActive(){ return localStorage.getItem(AK)||'Me'; }
+var sk = function(n){ return 'ru3-'+n.toLowerCase().replace(/\s+/g,'-'); };
+function loadState(name){
+  var raw = localStorage.getItem(sk(name));
+  if(!raw) return {workouts:[],log:[],sched:{},library:{}};
+  var s = JSON.parse(raw);
+  if(!s.log) s.log = [];
+  return s;
+}
+
+var profile = getActive();
+var S = loadState(profile);
+ge('profile-badge').textContent = profile;
+
+/* ── Parse a weight string to a comparable number ── */
+function parseWeight(w){
+  if(!w||w==='—'||w==='') return null;
+  var n = parseFloat(String(w).replace(/[^0-9.]/g,''));
+  return isNaN(n) ? null : n;
+}
+
+/* ── Parse reps to number ── */
+function parseReps(r){
+  var n = parseInt(String(r||'').replace(/[^0-9]/g,''));
+  return isNaN(n) ? null : n;
+}
+
+/* ── Parse sets to number ── */
+function parseSets(s){
+  var n = parseInt(String(s||'').replace(/[^0-9]/g,''));
+  return isNaN(n) ? null : n;
+}
+
+/* ── Score for an exercise entry (volume proxy) ── */
+function entryScore(e){
+  var w = parseWeight(e.weight)||0;
+  var r = parseReps(e.reps)||0;
+  var s = parseSets(e.sets)||1;
+  /* if no weight (bodyweight), score on sets×reps */
+  return w > 0 ? w * r * s : r * s;
+}
+
+/* ── Analyse log, group by exercise name ── */
+function analyseExercises(){
+  /* Build timeline: exercise name -> [{date, weight, reps, sets, score, done}] */
+  var map = {};
+  /* S.log is newest-first, reverse for chronological */
+  var chronoLog = S.log.slice().reverse();
+  chronoLog.forEach(function(entry){
+    (entry.exercises||[]).forEach(function(e){
+      if(!e.name) return;
+      var key = e.name.trim().toLowerCase();
+      if(!map[key]) map[key] = {name:e.name.trim(), sessions:[]};
+      map[key].sessions.push({
+        date: entry.date,
+        weight: e.weight,
+        reps: e.reps,
+        sets: e.sets,
+        score: entryScore(e),
+        done: !!e.done
+      });
+    });
+  });
+
+  var alerts = [], ontrack = [];
+
+  Object.values(map).forEach(function(ex){
+    var sessions = ex.sessions;
+    /* Need at least 3 sessions to evaluate */
+    if(sessions.length < 3) return;
+
+    /* Compute stagnation streak from the end */
+    /* A streak breaks when score increases vs the reference */
+    var last = sessions.length - 1;
+    var refScore = sessions[last].score;
+    var streak = 1;
+    for(var i = last - 1; i >= 0; i--){
+      var s = sessions[i];
+      if(s.score >= refScore){ streak++; refScore = s.score; }
+      else break;
+    }
+
+    /* A streak of 1-2 means they improved recently — on track */
+    if(streak < 3){
+      ontrack.push({
+        name: ex.name,
+        sessions: sessions,
+        streak: streak,
+        lastImproved: sessions.length - streak
+      });
+      return;
+    }
+
+    var level = streak >= 7 ? 'critical' : streak >= 5 ? 'danger' : 'warn';
+    var latestWeight = sessions[last].weight;
+    var latestReps = sessions[last].reps;
+    var latestSets = sessions[last].sets;
+    var latestScore = sessions[last].score;
+
+    /* Build suggestions */
+    var suggestions = [];
+    var w = parseWeight(latestWeight);
+    var r = parseReps(latestReps);
+    var s2 = parseSets(latestSets);
+    if(w && w > 0){
+      var inc = w < 45 ? 2.5 : w < 100 ? 5 : 10;
+      suggestions.push('Try '+(w+inc)+'lbs');
+    }
+    if(r) suggestions.push('Add a rep → '+(r+1)+' reps');
+    if(s2) suggestions.push('Add a set → '+(s2+1)+' sets');
+    if(!suggestions.length) suggestions.push('Increase load or reps');
+
+    alerts.push({
+      name: ex.name,
+      level: level,
+      streak: streak,
+      sessions: sessions,
+      latestWeight: latestWeight,
+      latestReps: latestReps,
+      latestSets: latestSets,
+      latestScore: latestScore,
+      suggestions: suggestions
+    });
+  });
+
+  /* Sort alerts by severity then streak */
+  var order = {critical:0,danger:1,warn:2};
+  alerts.sort(function(a,b){
+    var d = order[a.level]-order[b.level];
+    return d !== 0 ? d : b.streak - a.streak;
+  });
+
+  return {alerts:alerts, ontrack:ontrack, totalTracked: alerts.length + ontrack.length};
+}
+
+/* ── Mini sparkbar for last N sessions ── */
+function sparkBars(sessions, limit){
+  var slice = sessions.slice(-Math.min(limit||8, sessions.length));
+  if(slice.length < 2) return '';
+  var maxScore = Math.max.apply(null, slice.map(function(s){return s.score||1;}));
+  var minScore = Math.min.apply(null, slice.map(function(s){return s.score||0;}));
+  var range = maxScore - minScore || 1;
+  var html = '<div class="history-mini">';
+  var prev = null;
+  slice.forEach(function(s, i){
+    var pct = Math.max(18, Math.round(((s.score - minScore)/range)*100));
+    var cls = prev===null ? '' : s.score > prev ? 'up' : s.score === prev ? 'same' : '';
+    html += '<div class="hbar '+cls+'" style="height:'+pct+'%" title="'+esc(s.weight)+' × '+esc(s.reps)+'"></div>';
+    prev = s.score;
+  });
+  html += '</div>';
+  return html;
+}
+
+/* ── Render ── */
+var currentFilter = 'all';
+var analysed = analyseExercises();
+
+function renderSummary(){
+  var critCount = analysed.alerts.filter(function(a){return a.level==='critical';}).length;
+  var dangerCount = analysed.alerts.filter(function(a){return a.level==='danger';}).length;
+  var warnCount = analysed.alerts.filter(function(a){return a.level==='warn';}).length;
+  ge('summary-strip').innerHTML =
+    '<div class="sum-card"><div class="sum-val" style="color:#FF00AA">'+critCount+'</div><div class="sum-lbl">Critical</div></div>'+
+    '<div class="sum-card"><div class="sum-val" style="color:#FF6B35">'+dangerCount+'</div><div class="sum-lbl">Danger</div></div>'+
+    '<div class="sum-card"><div class="sum-val" style="color:#F5FF00">'+warnCount+'</div><div class="sum-lbl">Warning</div></div>';
+}
+
+function renderAlerts(){
+  var cont = ge('alerts-container');
+  var otCont = ge('ontrack-container');
+  var showOntrack = currentFilter === 'all' || currentFilter === 'ontrack';
+  var showAlerts = currentFilter !== 'ontrack';
+
+  cont.innerHTML = '';
+  otCont.innerHTML = '';
+  otCont.classList.toggle('hidden', !showOntrack || !analysed.ontrack.length);
+
+  if(!S.log.length){
+    cont.innerHTML = '<div class="no-data"><span class="no-data-i">📋</span>No sessions logged yet.<br>Finish a workout and tap <b>Log ✓</b> to start tracking.</div>';
+    return;
+  }
+
+  if(!analysed.totalTracked){
+    cont.innerHTML = '<div class="no-data"><span class="no-data-i">📉</span>Not enough data yet.<br>You need <b>3+ logged sessions</b> per exercise before alerts can fire.</div>';
+    return;
+  }
+
+  /* Alerts */
+  var visibleAlerts = analysed.alerts.filter(function(a){
+    return currentFilter === 'all' || a.level === currentFilter;
+  });
+
+  if(showAlerts){
+    if(visibleAlerts.length === 0 && currentFilter !== 'ontrack'){
+      cont.innerHTML = '<div class="no-data"><span class="no-data-i">✅</span>No alerts in this category.<br>Keep it up!</div>';
+    } else {
+      if(currentFilter === 'all' && analysed.alerts.length) {
+        var secDiv = document.createElement('div');
+        secDiv.className = 'sec-row';
+        secDiv.innerHTML = '<span class="sec">Needs Attention ('+analysed.alerts.length+')</span>';
+        cont.appendChild(secDiv);
+      }
+      visibleAlerts.forEach(function(a){
+        var card = document.createElement('div');
+        card.className = 'alert-card '+a.level;
+
+        var icon = a.level==='critical' ? '🚨' : a.level==='danger' ? '⚠️' : '💡';
+        var streakLabel = a.streak+' sessions stagnant';
+        var streakCls = 'streak-'+a.level;
+
+        var lastDate = new Date(a.sessions[a.sessions.length-1].date);
+        var dateStr = lastDate.toLocaleDateString('en-US',{month:'short',day:'numeric'});
+
+        card.innerHTML =
+          '<div class="alert-icon">'+icon+'</div>'+
+          '<div class="alert-body">'+
+            '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:4px">'+
+              '<div class="alert-name">'+esc(a.name)+'</div>'+
+              '<span class="alert-streak '+streakCls+'">'+esc(streakLabel)+'</span>'+
+            '</div>'+
+            '<div class="alert-meta">'+
+              'Last logged: <b style="color:var(--text)">'+esc(a.latestSets)+'×'+esc(a.latestReps)+'</b>'+
+              (parseWeight(a.latestWeight)?'  @  <b style="color:var(--gold)">'+esc(a.latestWeight)+'</b>':'')+
+              ' &nbsp;·&nbsp; '+dateStr+
+            '</div>'+
+            '<div class="alert-tags">'+
+              a.suggestions.map(function(s){return '<span class="alert-tag suggest">'+esc(s)+'</span>';}).join('')+
+            '</div>'+
+            sparkBars(a.sessions)+
+          '</div>';
+        cont.appendChild(card);
+      });
+    }
+  }
+
+  /* On Track */
+  if(showOntrack && analysed.ontrack.length){
+    var otSec = document.createElement('div');
+    otSec.className = 'sec-row';
+    otSec.style.marginTop = showAlerts && visibleAlerts.length ? '20px' : '4px';
+    otSec.innerHTML = '<span class="sec">On Track ('+analysed.ontrack.length+')</span>';
+    otCont.appendChild(otSec);
+
+    analysed.ontrack.forEach(function(ex){
+      var last = ex.sessions[ex.sessions.length-1];
+      var dateStr = new Date(last.date).toLocaleDateString('en-US',{month:'short',day:'numeric'});
+      var div = document.createElement('div');
+      div.className = 'ontrack-card';
+      div.innerHTML =
+        '<span style="font-size:1.2rem">✅</span>'+
+        '<div class="ontrack-name">'+esc(ex.name)+'</div>'+
+        '<div class="ontrack-meta">'+dateStr+'</div>'+
+        '<span class="ontrack-badge">Progressing</span>';
+      otCont.appendChild(div);
+    });
+    otCont.classList.remove('hidden');
+  }
+}
+
+/* ── Filter buttons ── */
+ge('filter-row').querySelectorAll('.fbtn').forEach(function(btn){
+  btn.addEventListener('click',function(){
+    ge('filter-row').querySelectorAll('.fbtn').forEach(function(b){b.classList.remove('on');});
+    btn.classList.add('on');
+    currentFilter = btn.dataset.filter;
+    renderAlerts();
+  });
+});
+
+/* ── Init ── */
+renderSummary();
+renderAlerts();
+</script>
+</body>
+</html>

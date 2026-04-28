@@ -1,0 +1,602 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
+  <title>Smart Tools — RepUp</title>
+  <meta name="theme-color" content="#00E5FF"/>
+  <link rel="icon" type="image/svg+xml" href="icon.svg"/>
+  <link rel="stylesheet" href="style.css?v=18"/>
+  <style>
+    body { min-height:100vh; background:var(--bg); color:var(--text); }
+    #app { display:flex; flex-direction:column; min-height:100vh; }
+
+    header {
+      flex-shrink:0; display:flex; align-items:center; gap:12px;
+      padding:14px 18px; padding-top:calc(14px + env(safe-area-inset-top));
+      background:linear-gradient(180deg,rgba(0,229,255,.09),rgba(4,7,15,.97));
+      border-bottom:1px solid rgba(0,229,255,.10);
+    }
+    .dbk {
+      width:40px; height:40px; border-radius:13px; background:var(--card2);
+      border:1px solid var(--border2); color:var(--text); font-size:1.1rem;
+      display:inline-flex; align-items:center; justify-content:center;
+      text-decoration:none; flex-shrink:0;
+    }
+    .page-title { font-size:1.1rem; font-weight:900; letter-spacing:-.3px; }
+    .page-sub   { font-size:.72rem; color:var(--t3); margin-top:2px; }
+
+    main { flex:1; overflow-y:auto; padding:16px 18px calc(80px + env(safe-area-inset-bottom)); }
+
+    /* ── OVERLOAD ALERT CARDS ─────────────────────────────── */
+    .alert-card {
+      background:var(--card); border-radius:var(--r-lg);
+      padding:16px 16px 14px; margin-bottom:12px;
+      box-shadow:var(--sh-card); position:relative;
+      overflow:hidden; border:1px solid var(--border);
+    }
+    .alert-card::before {
+      content:''; position:absolute; top:0; left:0; width:4px; bottom:0;
+    }
+    .alert-card.stagnant { border-color:rgba(255,60,60,.32); }
+    .alert-card.stagnant::before { background:#FF3C3C; box-shadow:0 0 12px rgba(255,60,60,.6); }
+    .alert-card.watch    { border-color:rgba(255,160,0,.28); }
+    .alert-card.watch::before    { background:#FFA000; box-shadow:0 0 12px rgba(255,160,0,.5); }
+
+    .alert-head { display:flex; align-items:flex-start; justify-content:space-between; margin-bottom:12px; gap:8px; }
+    .alert-name { font-size:.97rem; font-weight:900; color:#fff; letter-spacing:-.15px; padding-left:10px; }
+    .alert-badge {
+      font-size:.58rem; font-weight:900; text-transform:uppercase;
+      letter-spacing:.07em; padding:3px 9px; border-radius:99px; flex-shrink:0;
+    }
+    .badge-stagnant { background:rgba(255,60,60,.18); color:#FF6666; border:1px solid rgba(255,60,60,.35); }
+    .badge-watch    { background:rgba(255,160,0,.16); color:#FFC040; border:1px solid rgba(255,160,0,.32); }
+
+    .alert-stats {
+      display:grid; grid-template-columns:repeat(4,1fr);
+      gap:8px; margin-bottom:12px; padding-left:10px;
+    }
+    .alert-stat { text-align:center; background:rgba(255,255,255,.04); border-radius:10px; padding:8px 4px; }
+    .alert-stat-val { font-size:1rem; font-weight:900; color:#fff; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .alert-stat-lbl { font-size:.55rem; font-weight:700; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); margin-top:2px; }
+
+    .alert-streak { font-size:.75rem; color:var(--muted); margin-bottom:10px; padding-left:10px; }
+    .alert-streak b { color:#fff; }
+
+    .alert-tip {
+      font-size:.76rem; padding:9px 12px; border-radius:10px; line-height:1.6;
+      padding-left:20px;
+    }
+    .tip-stagnant { background:rgba(255,60,60,.09); color:#FF9999; border:1px solid rgba(255,60,60,.18); }
+    .tip-watch    { background:rgba(255,160,0,.09); color:#FFBA50; border:1px solid rgba(255,160,0,.18); }
+
+    .summary-row {
+      display:flex; align-items:center; gap:10px; padding:12px 16px;
+      background:var(--card); border:1px solid var(--border);
+      border-radius:var(--r-lg); margin-bottom:16px; box-shadow:var(--sh-card);
+    }
+    .summary-stat { text-align:center; flex:1; }
+    .summary-val { font-size:1.4rem; font-weight:900; }
+    .summary-lbl { font-size:.58rem; font-weight:700; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); margin-top:1px; }
+
+    /* ── RPE / RIR ─────────────────────────────────────────── */
+    .rpe-toggle {
+      display:flex; gap:4px; background:rgba(0,0,0,.3);
+      border-radius:13px; padding:4px; border:1px solid var(--border); margin-bottom:18px;
+    }
+    .rpe-mode {
+      flex:1; padding:9px 12px; border-radius:10px; font-size:.82rem;
+      font-weight:800; cursor:pointer; border:none; background:none;
+      color:var(--muted); transition:all .2s; font-family:inherit; text-align:center;
+    }
+    .rpe-mode.on { background:var(--grad); color:#000; box-shadow:0 2px 14px rgba(0,229,255,.4); }
+
+    .scale-label {
+      font-size:.62rem; font-weight:800; text-transform:uppercase;
+      letter-spacing:.6px; color:var(--muted); display:block; margin-bottom:8px;
+    }
+    .rpe-scale { display:flex; gap:5px; margin-bottom:16px; flex-wrap:nowrap; }
+    .rpe-btn {
+      flex:1; padding:10px 2px; border-radius:10px; font-size:.85rem;
+      font-weight:900; cursor:pointer; border:1.5px solid var(--border);
+      background:var(--card2); color:var(--muted); transition:all .18s;
+      font-family:inherit; text-align:center; min-width:0;
+    }
+    .rpe-btn.sel { color:#000; border-color:transparent; }
+
+    .log-card {
+      background:var(--card); border:1px solid var(--border);
+      border-radius:var(--r-xl); padding:18px 18px 16px;
+      margin-bottom:18px; box-shadow:var(--sh-card);
+    }
+    .log-card-title { font-size:.96rem; font-weight:900; color:#fff; margin-bottom:14px; }
+
+    .rpe-entry {
+      background:var(--card); border:1px solid var(--border);
+      border-radius:var(--r-lg); padding:13px 14px;
+      margin-bottom:9px; display:flex; align-items:center;
+      gap:12px; box-shadow:var(--sh-card);
+    }
+    .rpe-badge {
+      width:44px; height:44px; border-radius:12px; flex-shrink:0;
+      display:flex; align-items:center; justify-content:center;
+      font-size:1.2rem; font-weight:900; color:#000;
+    }
+    .rpe-entry-body { flex:1; min-width:0; }
+    .rpe-entry-name { font-size:.92rem; font-weight:800; color:#fff; }
+    .rpe-entry-meta { font-size:.72rem; color:var(--muted); margin-top:3px; }
+    .rpe-entry-side { display:flex; flex-direction:column; align-items:flex-end; gap:5px; flex-shrink:0; }
+    .rpe-entry-date { font-size:.62rem; color:var(--muted); }
+    .rpe-del {
+      background:none; border:none; color:var(--muted); font-size:.85rem;
+      cursor:pointer; padding:3px 5px; border-radius:7px; transition:color .15s, background .15s;
+    }
+    .rpe-del:hover { color:var(--red); background:rgba(255,0,85,.10); }
+
+    /* ── BOTTOM NAV ─────────────────────────────────────────── */
+    .gnav {
+      position:fixed; bottom:0; left:0; right:0; display:flex;
+      background:rgba(4,7,15,.98); backdrop-filter:blur(28px);
+      -webkit-backdrop-filter:blur(28px);
+      border-top:1px solid rgba(0,229,255,.08);
+      padding-bottom:env(safe-area-inset-bottom); z-index:50;
+    }
+    .gnav a {
+      flex:1; display:flex; flex-direction:column; align-items:center;
+      justify-content:center; gap:4px; padding:10px 6px 8px;
+      color:var(--muted); text-decoration:none; font-size:.56rem;
+      font-weight:800; text-transform:uppercase; letter-spacing:.45px; position:relative;
+    }
+    .gnav a svg { width:20px; height:20px; stroke:currentColor; fill:none; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; }
+    .gnav a.on { color:var(--accent); }
+    .gnav a.on::before { content:''; position:absolute; top:0; left:50%; transform:translateX(-50%); width:28px; height:2.5px; background:var(--grad); border-radius:0 0 4px 4px; }
+  </style>
+</head>
+<body>
+<div id="app">
+
+  <header>
+    <a href="./repup.html" class="dbk">←</a>
+    <div>
+      <div class="page-title">Smart Tools</div>
+      <div class="page-sub">Overload alerts &amp; RPE / RIR tracking</div>
+    </div>
+  </header>
+
+  <main>
+
+    <div class="subtabs" style="margin-top:2px;margin-bottom:20px">
+      <button class="stab on" data-p="overload">📈 Overload Alerts</button>
+      <button class="stab" data-p="rpe">🎯 RPE / RIR</button>
+    </div>
+
+    <!-- ══ OVERLOAD ALERTS ══ -->
+    <div id="p-overload">
+      <div id="overload-summary"></div>
+      <div id="overload-list"></div>
+    </div>
+
+    <!-- ══ RPE / RIR ══ -->
+    <div id="p-rpe" class="hidden">
+
+      <div class="rpe-toggle">
+        <button class="rpe-mode on" id="mode-rpe">RPE &nbsp;(1–10)</button>
+        <button class="rpe-mode"    id="mode-rir">RIR &nbsp;(0–5)</button>
+      </div>
+
+      <div class="log-card">
+        <div class="log-card-title">Log Entry</div>
+        <div class="fg">
+          <label>Exercise</label>
+          <input type="text" id="rpe-ex" placeholder="e.g. Bench Press" autocomplete="off" autocorrect="off"/>
+        </div>
+        <div class="frow">
+          <div class="fg"><label>Sets</label><input type="number" id="rpe-sets" placeholder="3" min="1" max="99"/></div>
+          <div class="fg"><label>Reps</label><input type="text"   id="rpe-reps"   placeholder="8"  maxlength="10"/></div>
+          <div class="fg"><label>Weight</label><input type="text" id="rpe-weight" placeholder="135 lbs" maxlength="20"/></div>
+        </div>
+        <span class="scale-label" id="scale-lbl">RPE — Rate of Perceived Exertion</span>
+        <div class="rpe-scale" id="rpe-scale"></div>
+        <div class="fg" style="margin-bottom:14px">
+          <label>Note (optional)</label>
+          <input type="text" id="rpe-note" placeholder="How it felt, technique cues…"/>
+        </div>
+        <button class="btn btn-o" style="width:100%" id="btn-save-rpe">Save Entry</button>
+        <div id="rpe-msg" style="font-size:.76rem;min-height:18px;margin-top:9px;text-align:center"></div>
+      </div>
+
+      <div class="sec-row" style="margin-top:4px;margin-bottom:12px">
+        <span class="sec">Recent Entries</span>
+        <button class="btn btn-g btn-sm" id="btn-clear-rpe">Clear All</button>
+      </div>
+      <div id="rpe-history"></div>
+    </div>
+
+  </main>
+
+  <nav class="gnav">
+    <a href="./repup.html">
+      <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>Home
+    </a>
+    <a href="./repup.html" class="on">
+      <svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>Tools
+    </a>
+    <a href="./progress.html">
+      <svg viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>Progress
+    </a>
+  </nav>
+
+</div>
+
+<script>
+'use strict';
+
+// ─── HELPERS ─────────────────────────────────────────────────
+var uid = function(){ return Math.random().toString(36).slice(2,10); };
+var ge  = function(id){ return document.getElementById(id); };
+var esc = function(s){
+  return String(s==null?'':s).replace(/[&<>"']/g, function(c){
+    return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
+  });
+};
+
+// ─── LOAD PROFILE STATE ───────────────────────────────────────
+function sk(n){ return 'ru3-'+n.toLowerCase().replace(/\s+/g,'-'); }
+function loadState(){
+  var name = localStorage.getItem('ru3-active') || 'Me';
+  var raw  = localStorage.getItem(sk(name));
+  var s    = raw ? JSON.parse(raw) : {workouts:[],log:[],sched:{},library:{}};
+  if(!s.log) s.log = [];
+  return s;
+}
+
+// ─── RPE STORAGE ─────────────────────────────────────────────
+var RPE_KEY = 'ru3-rpe-log';
+function getRPELog(){ return JSON.parse(localStorage.getItem(RPE_KEY)||'[]'); }
+function saveRPELog(l){ localStorage.setItem(RPE_KEY, JSON.stringify(l)); }
+
+// ─── TAB SWITCHER ─────────────────────────────────────────────
+document.querySelectorAll('.stab[data-p]').forEach(function(btn){
+  btn.addEventListener('click', function(){
+    document.querySelectorAll('.stab[data-p]').forEach(function(b){ b.classList.remove('on'); });
+    btn.classList.add('on');
+    ge('p-overload').classList.toggle('hidden', btn.dataset.p !== 'overload');
+    ge('p-rpe').classList.toggle('hidden', btn.dataset.p !== 'rpe');
+  });
+});
+
+// ════════════════════════════════════════════════════════════
+// OVERLOAD ALERTS
+// ════════════════════════════════════════════════════════════
+
+function parseWeightNum(w){
+  var s = String(w||'').toLowerCase().replace(/\s/g,'');
+  if(!s || s === '—' || s.includes('body') || s.includes('bw')) return null;
+  var m = s.match(/(\d+\.?\d*)/);
+  return m ? parseFloat(m[1]) : null;
+}
+
+function analyzeOverload(){
+  var S = loadState();
+  if(!S.log.length) return { exercises:[], total:0, empty:true };
+
+  var exMap = {};
+  S.log.forEach(function(session){
+    (session.exercises||[]).forEach(function(ex){
+      if(!ex.name) return;
+      var key = ex.name.toLowerCase().trim();
+      if(!exMap[key]) exMap[key] = { name:ex.name, sessions:[] };
+      exMap[key].sessions.push({
+        date:   session.date,
+        sets:   ex.sets,
+        reps:   ex.reps,
+        weight: ex.weight
+      });
+    });
+  });
+
+  var results = [];
+
+  Object.keys(exMap).forEach(function(key){
+    var ex = exMap[key];
+    if(ex.sessions.length < 2) return;
+
+    // log is newest-first (unshift)
+    var sessions = ex.sessions;
+    var latest   = sessions[0];
+
+    // count consecutive sessions with identical weight & reps
+    var sameCount = 0;
+    for(var i = 0; i < sessions.length; i++){
+      var normW = function(w){ return String(w||'').toLowerCase().replace(/\s/g,''); };
+      var normR = function(r){ return String(r||'').toLowerCase().replace(/\s/g,''); };
+      if(normW(sessions[i].weight) === normW(latest.weight) &&
+         normR(sessions[i].reps)   === normR(latest.reps)){
+        sameCount++;
+      } else { break; }
+    }
+
+    if(sameCount < 2) return;
+
+    var status = sameCount >= 4 ? 'stagnant' : 'watch';
+
+    // build recommendation
+    var wt  = parseWeightNum(latest.weight);
+    var rep = parseInt(latest.reps) || 0;
+    var rec;
+    if(status === 'stagnant'){
+      if(wt !== null && wt > 0){
+        var inc = wt >= 100 ? 5 : wt >= 45 ? 2.5 : 1.25;
+        var newWt = wt + inc;
+        rec = 'Increase to ' + newWt + ' (same unit) next session, or push for ' + (rep + 1) + ' reps at current weight to force adaptation.';
+      } else {
+        rec = 'Add 1–2 reps per set, an extra set, or shorten rest by 15 sec to keep the stimulus growing.';
+      }
+    } else {
+      rec = 'Consistent effort — if the last session felt manageable (RPE ≤ 7), nudge the weight or reps upward next time.';
+    }
+
+    results.push({
+      name: ex.name, status: status,
+      sameCount: sameCount, totalSessions: ex.sessions.length,
+      latest: latest, rec: rec
+    });
+  });
+
+  results.sort(function(a,b){
+    if(a.status !== b.status) return a.status === 'stagnant' ? -1 : 1;
+    return b.sameCount - a.sameCount;
+  });
+
+  return { exercises:results, total:Object.keys(exMap).length, empty:false };
+}
+
+function renderOverload(){
+  var r = analyzeOverload();
+  var sumEl  = ge('overload-summary');
+  var listEl = ge('overload-list');
+
+  if(r.empty){
+    sumEl.innerHTML  = '';
+    listEl.innerHTML =
+      '<div class="empty" style="padding:52px 20px">'+
+        '<div class="empty-i">📋</div>'+
+        '<p>No workout history yet.<br>Log some sessions in the main app,<br>then come back for alerts.</p>'+
+      '</div>';
+    return;
+  }
+
+  var stagnantN = r.exercises.filter(function(e){ return e.status==='stagnant'; }).length;
+  var watchN    = r.exercises.filter(function(e){ return e.status==='watch'; }).length;
+  var okN       = r.total - r.exercises.length;
+
+  sumEl.innerHTML =
+    '<div class="summary-row">'+
+      '<div class="summary-stat"><div class="summary-val" style="color:#FF6666">'+stagnantN+'</div><div class="summary-lbl">Stagnant</div></div>'+
+      '<div style="width:1px;background:var(--border);align-self:stretch"></div>'+
+      '<div class="summary-stat"><div class="summary-val" style="color:#FFC040">'+watchN+'</div><div class="summary-lbl">Watch</div></div>'+
+      '<div style="width:1px;background:var(--border);align-self:stretch"></div>'+
+      '<div class="summary-stat"><div class="summary-val" style="color:var(--green)">'+okN+'</div><div class="summary-lbl">Progressing</div></div>'+
+      '<div style="width:1px;background:var(--border);align-self:stretch"></div>'+
+      '<div class="summary-stat"><div class="summary-val" style="color:var(--accent)">'+r.total+'</div><div class="summary-lbl">Tracked</div></div>'+
+    '</div>';
+
+  if(!r.exercises.length){
+    listEl.innerHTML =
+      '<div class="empty" style="padding:40px 20px">'+
+        '<div class="empty-i">✅</div>'+
+        '<p>All '+r.total+' exercises are progressing.<br>Keep it up!</p>'+
+      '</div>';
+    return;
+  }
+
+  listEl.innerHTML = r.exercises.map(function(ex){
+    var isStagnant = ex.status === 'stagnant';
+    return (
+      '<div class="alert-card '+ex.status+'">'+
+        '<div class="alert-head">'+
+          '<div class="alert-name">'+esc(ex.name)+'</div>'+
+          '<span class="alert-badge '+(isStagnant?'badge-stagnant':'badge-watch')+'">'+
+            (isStagnant ? '🔴 Stagnant' : '🟡 Watch')+
+          '</span>'+
+        '</div>'+
+        '<div class="alert-stats">'+
+          '<div class="alert-stat"><div class="alert-stat-val">'+esc(ex.latest.weight)+'</div><div class="alert-stat-lbl">Weight</div></div>'+
+          '<div class="alert-stat"><div class="alert-stat-val">'+esc(ex.latest.reps)+'</div><div class="alert-stat-lbl">Reps</div></div>'+
+          '<div class="alert-stat"><div class="alert-stat-val">'+esc(ex.latest.sets)+'</div><div class="alert-stat-lbl">Sets</div></div>'+
+          '<div class="alert-stat"><div class="alert-stat-val" style="color:'+(isStagnant?'#FF6666':'#FFC040')+'">'+ex.sameCount+'×</div><div class="alert-stat-lbl">Same</div></div>'+
+        '</div>'+
+        '<div class="alert-streak">Same weight &amp; reps for <b>'+ex.sameCount+' session'+(ex.sameCount>1?'s':'')+'</b> ('+ex.totalSessions+' total logged)</div>'+
+        '<div class="alert-tip '+(isStagnant?'tip-stagnant':'tip-watch')+'">💡 '+esc(ex.rec)+'</div>'+
+      '</div>'
+    );
+  }).join('');
+}
+
+// ════════════════════════════════════════════════════════════
+// RPE / RIR
+// ════════════════════════════════════════════════════════════
+
+var rpeMode      = 'rpe';
+var selectedVal  = null;
+
+function rpeColor(v, mode){
+  var n = parseInt(v);
+  if(mode === 'rir'){
+    if(n === 0) return '#FF3333';
+    if(n <= 1)  return '#FF9520';
+    if(n <= 2)  return '#F5FF00';
+    if(n <= 3)  return '#5AFE9A';
+    return '#00E5FF';
+  } else {
+    if(n >= 10) return '#FF3333';
+    if(n >= 8)  return '#FF9520';
+    if(n >= 6)  return '#F5FF00';
+    if(n >= 4)  return '#5AFE9A';
+    return '#00E5FF';
+  }
+}
+
+function rpeLabel(v, mode){
+  var n = parseInt(v);
+  if(mode === 'rir'){
+    var labels = {0:'Failure',1:'1 left',2:'2 left',3:'3 left',4:'4 left',5:'Easy'};
+    return labels[n] || '';
+  } else {
+    if(n <= 2)  return 'Very easy';
+    if(n <= 4)  return 'Easy';
+    if(n <= 6)  return 'Moderate';
+    if(n <= 7)  return 'Hard';
+    if(n <= 8)  return 'Very hard';
+    if(n <= 9)  return 'Max –1';
+    return 'Max effort';
+  }
+}
+
+function buildScale(){
+  var scaleEl = ge('rpe-scale');
+  var lblEl   = ge('scale-lbl');
+  if(!scaleEl) return;
+
+  var values = rpeMode === 'rpe'
+    ? [1,2,3,4,5,6,7,8,9,10]
+    : [0,1,2,3,4,5];
+
+  lblEl.textContent = rpeMode === 'rpe'
+    ? 'RPE — Rate of Perceived Exertion (tap to select)'
+    : 'RIR — Reps In Reserve (tap to select)';
+
+  scaleEl.innerHTML = values.map(function(v){
+    var col  = rpeColor(v, rpeMode);
+    var isSel = selectedVal === v;
+    return '<button class="rpe-btn'+(isSel?' sel':'')+'" data-v="'+v+'"'+
+      (isSel?' style="background:'+col+';box-shadow:0 0 14px '+col+'80"':'')+
+      '>'+v+'</button>';
+  }).join('');
+
+  scaleEl.querySelectorAll('.rpe-btn').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      selectedVal = parseInt(btn.dataset.v);
+      buildScale();
+    });
+  });
+}
+
+function renderRPEHistory(){
+  var log  = getRPELog();
+  var hist = ge('rpe-history');
+
+  if(!log.length){
+    hist.innerHTML =
+      '<div class="empty" style="padding:36px 20px">'+
+        '<div class="empty-i" style="font-size:2.4rem;margin-bottom:10px">🎯</div>'+
+        '<p>No entries yet.<br>Log your first RPE or RIR above.</p>'+
+      '</div>';
+    return;
+  }
+
+  hist.innerHTML = log.slice().reverse().map(function(e){
+    var col   = rpeColor(e.value, e.mode);
+    var badge = e.mode.toUpperCase() + ' ' + e.value;
+    var d     = new Date(e.date);
+    var ds    = d.toLocaleDateString('en-US',{month:'short',day:'numeric'});
+    var ts    = d.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});
+    return (
+      '<div class="rpe-entry">'+
+        '<div class="rpe-badge" style="background:'+col+';box-shadow:0 0 12px '+col+'60">'+e.value+'</div>'+
+        '<div class="rpe-entry-body">'+
+          '<div class="rpe-entry-name">'+esc(e.exercise)+'</div>'+
+          '<div class="rpe-entry-meta">'+
+            esc(e.sets)+'×'+esc(e.reps)+' &nbsp;·&nbsp; '+esc(e.weight)+
+            ' &nbsp;·&nbsp; <span style="color:'+col+'">'+badge+'</span>'+
+            ' &nbsp;·&nbsp; '+esc(rpeLabel(e.value, e.mode))+
+            (e.note ? ' &nbsp;·&nbsp; <i>'+esc(e.note)+'</i>' : '')+
+          '</div>'+
+        '</div>'+
+        '<div class="rpe-entry-side">'+
+          '<div class="rpe-entry-date">'+ds+'<br>'+ts+'</div>'+
+          '<button class="rpe-del" data-id="'+e.id+'">✕</button>'+
+        '</div>'+
+      '</div>'
+    );
+  }).join('');
+
+  hist.querySelectorAll('.rpe-del').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      var updated = getRPELog().filter(function(e){ return e.id !== btn.dataset.id; });
+      saveRPELog(updated);
+      renderRPEHistory();
+    });
+  });
+}
+
+// mode toggle
+ge('mode-rpe').addEventListener('click', function(){
+  rpeMode = 'rpe'; selectedVal = null;
+  ge('mode-rpe').classList.add('on');
+  ge('mode-rir').classList.remove('on');
+  buildScale();
+});
+ge('mode-rir').addEventListener('click', function(){
+  rpeMode = 'rir'; selectedVal = null;
+  ge('mode-rir').classList.add('on');
+  ge('mode-rpe').classList.remove('on');
+  buildScale();
+});
+
+// save entry
+ge('btn-save-rpe').addEventListener('click', function(){
+  var ex     = (ge('rpe-ex').value||'').trim();
+  var sets   = (ge('rpe-sets').value||'3').trim();
+  var reps   = (ge('rpe-reps').value||'').trim();
+  var weight = (ge('rpe-weight').value||'—').trim();
+  var note   = (ge('rpe-note').value||'').trim();
+  var msgEl  = ge('rpe-msg');
+  var setMsg = function(m,ok){ msgEl.textContent=m; msgEl.style.color=ok?'var(--green)':'var(--red)'; };
+
+  if(!ex){ setMsg('✗ Exercise name is required.'); ge('rpe-ex').focus(); return; }
+  if(selectedVal === null){ setMsg('✗ Tap a value on the scale above.'); return; }
+
+  var log = getRPELog();
+  log.push({
+    id:       uid(),
+    date:     new Date().toISOString(),
+    exercise: ex,
+    sets:     sets,
+    reps:     reps,
+    weight:   weight,
+    mode:     rpeMode,
+    value:    selectedVal,
+    note:     note
+  });
+  saveRPELog(log);
+
+  // reset form
+  ge('rpe-ex').value = ''; ge('rpe-sets').value = '';
+  ge('rpe-reps').value = ''; ge('rpe-weight').value = ''; ge('rpe-note').value = '';
+  selectedVal = null;
+  buildScale();
+  setMsg('✓ Entry saved!', true);
+  setTimeout(function(){ msgEl.textContent=''; }, 2200);
+  renderRPEHistory();
+});
+
+// enter key
+['rpe-ex','rpe-sets','rpe-reps','rpe-weight','rpe-note'].forEach(function(id){
+  var el = ge(id); if(!el) return;
+  el.addEventListener('keydown', function(e){ if(e.key==='Enter') ge('btn-save-rpe').click(); });
+});
+
+// clear all
+ge('btn-clear-rpe').addEventListener('click', function(){
+  if(!confirm('Delete all RPE / RIR entries?')) return;
+  saveRPELog([]); renderRPEHistory();
+});
+
+// ─── INIT ─────────────────────────────────────────────────────
+renderOverload();
+buildScale();
+renderRPEHistory();
+</script>
+</body>
+</html>

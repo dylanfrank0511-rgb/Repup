@@ -122,7 +122,7 @@ body::after {
   top: 0; left: 0; right: 0; bottom: 0;
   display: flex;
   flex-direction: column;
-  max-width: 640px;
+  max-width: 960px;
   margin: 0 auto;
   z-index: 1;
 }
@@ -190,7 +190,7 @@ main {
   flex: 1;
   overflow-y: auto;
   overflow-x: hidden;
-  padding: 14px 15px 10px;
+  padding: 16px 18px 10px;
   -webkit-overflow-scrolling: touch;
 }
 main::-webkit-scrollbar { display: none; }
@@ -386,20 +386,17 @@ button:active { transform: scale(.91); }
 /* ── SCHEDULE STRIP ──────────────────────────────────────────── */
 .sstrip {
   display: flex;
-  gap: 8px;
-  overflow-x: auto;
+  gap: 6px;
   padding-bottom: 4px;
-  scrollbar-width: none;
 }
-.sstrip::-webkit-scrollbar { display: none; }
 
 .sday {
-  flex: 0 0 auto;
-  min-width: 64px;
+  flex: 1;
+  min-width: 0;
   background: var(--card);
   border: 1.5px solid var(--border);
-  border-radius: 18px;
-  padding: 11px 8px;
+  border-radius: 16px;
+  padding: 10px 4px;
   text-align: center;
   transition: all .22s cubic-bezier(.4,0,.2,1);
   box-shadow: var(--sh-card);
@@ -416,26 +413,25 @@ button:active { transform: scale(.91); }
   box-shadow: 0 0 28px rgba(0,229,255,.25), var(--sh-card);
 }
 .sday-d {
-  font-size: .52rem;
+  font-size: .48rem;
   font-weight: 800;
   text-transform: uppercase;
-  letter-spacing: .6px;
+  letter-spacing: .5px;
   color: var(--muted);
 }
-.sday-n { font-size: 1.38rem; font-weight: 900; margin: 3px 0; }
+.sday-n { font-size: 1.2rem; font-weight: 900; margin: 2px 0; }
 .sday.today .sday-n { color: var(--accent); }
 .sday-w {
-  font-size: .55rem;
+  font-size: .46rem;
   font-weight: 700;
   color: var(--accent);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  max-width: 60px;
 }
 
 /* ── WORKOUT CARDS ───────────────────────────────────────────── */
-.wgrid { display: grid; gap: 14px; }
+.wgrid { display: grid; gap: 14px; grid-template-columns: 1fr 1fr; }
 
 .wcard {
   background: var(--card);
@@ -487,23 +483,52 @@ button:active { transform: scale(.91); }
 .wcard-pill::before { content: '· '; color: var(--muted); }
 .wcard-more  { font-size: .73rem; color: var(--accent); font-weight: 700; margin-top: 3px; }
 
-.feature-card {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 16px 18px;
-  margin: 18px 0 8px;
-  border-radius: 22px;
-  background: linear-gradient(180deg, rgba(0,229,255,.08), rgba(245,255,0,.06));
-  border: 1px solid rgba(0,229,255,.18);
-  box-shadow: 0 14px 40px rgba(0,0,0,.32);
-  text-decoration: none;
+/* ── FEATURE GRID (home page) ────────────────────────────────── */
+.feature-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 20px;
 }
-.feature-card:hover { transform: translateY(-1px); }
-.feature-card .title { font-size: 1rem; font-weight: 900; color: #fff; }
-.feature-card .detail { font-size: .82rem; color: var(--text2); line-height: 1.5; margin-top: 6px; }
-.feature-card .icon { font-size: 1.55rem; color: var(--gold); }
+
+.fcard {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  padding: 16px 14px 14px;
+  text-decoration: none;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  transition: border-color .2s,
+              transform .22s cubic-bezier(.34,1.56,.64,1),
+              box-shadow .2s;
+  box-shadow: var(--sh-card);
+  position: relative;
+  overflow: hidden;
+}
+.fcard::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  background: var(--grad);
+  opacity: 0;
+  transition: opacity .2s;
+}
+.fcard:hover { border-color: var(--border2); transform: translateY(-3px); box-shadow: var(--sh-card2); }
+.fcard:hover::before { opacity: 1; }
+.fcard:active { transform: scale(.95); }
+
+.fcard-icon { font-size: 1.55rem; line-height: 1; margin-bottom: 2px; }
+.fcard-name { font-size: .88rem; font-weight: 800; color: var(--t1); letter-spacing: -.1px; }
+.fcard-sub  { font-size: .68rem; color: var(--t3); }
+
+/* wide card spans all columns */
+.fcard.wide { grid-column: span 4; flex-direction: row; align-items: center; gap: 14px; padding: 14px 18px; }
+.fcard.wide .fcard-icon { font-size: 1.8rem; flex-shrink: 0; }
+.fcard.wide .fcard-name { font-size: .96rem; }
+.fcard.wide .fcard-arrow { margin-left: auto; font-size: 1.1rem; color: var(--t3); flex-shrink: 0; }
 
 
 .dbk {
@@ -975,7 +1000,86 @@ textarea { resize: vertical; min-height: 72px; }
 .empty-i { font-size: 3.2rem; margin-bottom: 14px; opacity: .22; }
 .empty p  { margin-bottom: 18px; line-height: 1.72; font-size: .88rem; }
 
+/* ── ACCOUNT / AUTH CARD ─────────────────────────────────────── */
+.acct-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--r-xl);
+  overflow: hidden;
+  margin-bottom: 18px;
+  box-shadow: var(--sh-card);
+}
+.acct-bar {
+  height: 4px;
+  background: var(--grad);
+  box-shadow: 0 0 24px rgba(0,229,255,.7), 0 0 12px rgba(245,255,0,.4);
+}
+.acct-body { padding: 22px 22px 20px; }
+.acct-title {
+  font-size: 1.05rem; font-weight: 900; color: #fff;
+  letter-spacing: -.25px; margin-bottom: 5px;
+}
+.acct-sub { font-size: .78rem; color: var(--muted); margin-bottom: 18px; line-height: 1.55; }
+.acct-tabs {
+  display: flex; gap: 4px; margin-bottom: 18px;
+  background: rgba(0,0,0,.3); border-radius: 13px; padding: 4px;
+  border: 1px solid var(--border);
+}
+.acct-tab {
+  flex: 1; padding: 9px 12px; border-radius: 10px;
+  font-size: .8rem; font-weight: 800; cursor: pointer;
+  border: none; background: none; color: var(--muted);
+  transition: all .2s; font-family: inherit; text-align: center;
+  letter-spacing: -.05px;
+}
+.acct-tab.on {
+  background: var(--grad); color: #000;
+  box-shadow: 0 2px 14px rgba(0,229,255,.40);
+}
+.acct-signed { display: flex; align-items: center; gap: 14px; }
+.acct-avatar {
+  width: 50px; height: 50px; border-radius: 50%;
+  background: var(--grad);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.25rem; font-weight: 900; color: #000; flex-shrink: 0;
+  box-shadow: var(--sh-accent), 0 0 0 4px rgba(0,229,255,.16);
+}
+.acct-info-col { flex: 1; min-width: 0; }
+.acct-email  { font-size: .93rem; font-weight: 800; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.acct-status { font-size: .64rem; font-weight: 800; color: var(--green); text-transform: uppercase; letter-spacing: .45px; margin-top: 4px; }
+.acct-msg    { font-size: .76rem; min-height: 20px; margin-bottom: 12px; line-height: 1.4; }
+
 /* ── RESPONSIVE ──────────────────────────────────────────────── */
-@media (max-width: 380px) {
+
+/* Small phones — keep things usable */
+@media (max-width: 420px) {
   .frow { grid-template-columns: 1fr 1fr; }
+  .feature-grid { grid-template-columns: 1fr 1fr; }
+  .fcard.wide   { grid-column: span 2; }
+  .wgrid        { grid-template-columns: 1fr; }
+  .sday-n       { font-size: 1.1rem; }
+}
+
+/* Medium phones (421–639px) */
+@media (min-width: 421px) and (max-width: 639px) {
+  .feature-grid { grid-template-columns: 1fr 1fr; }
+  .fcard.wide   { grid-column: span 2; }
+  .wgrid        { grid-template-columns: 1fr 1fr; }
+}
+
+/* Tablet and larger (640px+) — full horizontal spread */
+@media (min-width: 640px) {
+  main    { padding: 20px 28px 10px; }
+  header  { padding: 16px 28px; padding-top: calc(16px + env(safe-area-inset-top)); }
+  .feature-grid { grid-template-columns: 1fr 1fr 1fr 1fr; gap: 14px; }
+  .fcard.wide   { grid-column: span 4; }
+  .wgrid  { grid-template-columns: 1fr 1fr; gap: 16px; }
+  .sday   { border-radius: 18px; padding: 12px 8px; }
+  .sday-d { font-size: .55rem; }
+  .sday-n { font-size: 1.38rem; }
+  .sday-w { font-size: .52rem; }
+  .fcard  { padding: 20px 16px 16px; }
+  .fcard-icon { font-size: 1.8rem; }
+  .fcard-name { font-size: .95rem; }
+  .fcard-sub  { font-size: .74rem; }
 }

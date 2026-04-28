@@ -10,17 +10,14 @@
   <meta name="theme-color" content="#00E5FF"/>
   <link rel="icon" type="image/svg+xml" href="icon.svg"/>
   <link rel="apple-touch-icon" href="icon.svg"/>
-  <link rel="stylesheet" href="style.css"/>
+  <link rel="stylesheet" href="style.css?v=18"/>
 </head>
 <body>
 <div id="app">
   <header>
-    <div class="logo">RepUp</div>
+    <div class="logo" id="logo-home" style="cursor:pointer">RepUp</div>
     <div style="display:flex;gap:8px;align-items:center">
       <button id="btn-new-workout" class="btn btn-o btn-sm" style="display:none">+ Workout</button>
-      <a href="./progress.html" style="width:38px;height:38px;border-radius:50%;background:var(--card2);border:1px solid var(--border2);display:flex;align-items:center;justify-content:center;font-size:1.1rem;text-decoration:none;flex-shrink:0;transition:border-color .15s" title="Progress">📈</a>
-      <a href="./vault.html" style="width:38px;height:38px;border-radius:50%;background:var(--card2);border:1px solid var(--border2);display:flex;align-items:center;justify-content:center;font-size:1.1rem;text-decoration:none;flex-shrink:0;transition:border-color .15s" title="Vault">🏆</a>
-      <a href="./guide.html" style="width:38px;height:38px;border-radius:50%;background:var(--card2);border:1px solid var(--border2);display:flex;align-items:center;justify-content:center;font-size:1.1rem;text-decoration:none;flex-shrink:0;transition:border-color .15s" title="Exercise Guide">💪</a>
       <button class="ibt" id="btn-avatar">?</button>
     </div>
   </header>
@@ -34,13 +31,47 @@
         <button class="btn btn-g btn-sm" id="btn-edit-sched">Edit Schedule</button>
       </div>
       <div class="sstrip" id="sstrip"></div>
-      <a href="./muscle.html" class="feature-card">
-        <div>
-          <div class="title">Muscle Activation Guide</div>
-          <div class="detail">Scroll through muscle-focused diagrams and lift tips for your most common workouts.</div>
-        </div>
-        <div class="icon">→</div>
-      </a>
+
+      <div class="sec-row" style="margin-top:18px"><span class="sec">Explore</span></div>
+      <div class="feature-grid">
+        <a href="./progress.html" class="fcard">
+          <div class="fcard-icon">📈</div>
+          <div class="fcard-name">Progress</div>
+          <div class="fcard-sub">Charts &amp; strength trends</div>
+        </a>
+        <a href="./vault.html" class="fcard">
+          <div class="fcard-icon">🏆</div>
+          <div class="fcard-name">Vault</div>
+          <div class="fcard-sub">PRs &amp; templates</div>
+        </a>
+        <a href="./guide.html" class="fcard">
+          <div class="fcard-icon">💪</div>
+          <div class="fcard-name">Exercise Guide</div>
+          <div class="fcard-sub">How-to &amp; muscle maps</div>
+        </a>
+        <a href="./muscle.html" class="fcard">
+          <div class="fcard-icon">🧬</div>
+          <div class="fcard-name">Muscle Diagrams</div>
+          <div class="fcard-sub">Activation by exercise</div>
+        </a>
+        <a href="./planner.html" class="fcard wide">
+          <div class="fcard-icon">📊</div>
+          <div>
+            <div class="fcard-name">Overload Planner</div>
+            <div class="fcard-sub">Your 12-week progression roadmap</div>
+          </div>
+          <div class="fcard-arrow">→</div>
+        </a>
+        <a href="./overload.html" class="fcard wide">
+          <div class="fcard-icon">🚨</div>
+          <div>
+            <div class="fcard-name">Overload Alerts</div>
+            <div class="fcard-sub">Exercises stuck at the same weight</div>
+          </div>
+          <div class="fcard-arrow">→</div>
+        </a>
+      </div>
+
       <div class="sec-row"><span class="sec">My Workouts</span></div>
       <div class="wgrid" id="wgrid"></div>
       <div class="empty hidden" id="empty-home">
@@ -94,6 +125,7 @@
         <button class="stab on" data-panel="p-import">📋 Import Notes</button>
         <button class="stab" data-panel="p-exinfo">💪 Exercise Info</button>
         <button class="stab" data-panel="p-ai">✨ AI Generate</button>
+        <button class="stab" data-panel="p-overload">🚨 Overload</button>
       </div>
 
       <!-- IMPORT NOTES -->
@@ -161,6 +193,16 @@
         </div>
       </div>
 
+      <!-- OVERLOAD ALERTS -->
+      <div id="p-overload" class="hidden">
+        <div style="margin-bottom:16px">
+          <div style="font-size:1.1rem;font-weight:900;margin-bottom:5px">🚨 Progressive Overload Alerts</div>
+          <div style="font-size:.82rem;color:var(--muted);line-height:1.5">Get notified when you've been lifting the same weight for too long — and see exactly what to increase.</div>
+        </div>
+        <a href="./overload.html" class="btn btn-o" style="display:block;text-align:center;text-decoration:none;padding:14px;font-size:.95rem;font-weight:800">Open Overload Dashboard →</a>
+        <div id="overload-preview" style="margin-top:16px"></div>
+      </div>
+
       <!-- AI GENERATE -->
       <div id="p-ai" class="hidden">
         <div style="margin-bottom:14px">
@@ -186,6 +228,7 @@
 
     <!-- PROFILE -->
     <div class="view" id="v-profile">
+      <div id="acct-section"></div>
       <div class="phero" id="phero"></div>
       <div class="sec-row"><span class="sec">All Profiles</span></div>
       <div id="plist"></div>
@@ -204,6 +247,7 @@
     <button class="nbt on" data-v="home"><svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>Home</button>
     <button class="nbt" data-v="history"><svg viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>History</button>
     <button class="nbt" data-v="tools"><svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>Tools</button>
+    <button class="nbt" data-v="plan"><svg viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/><line x1="18" y1="6" x2="22" y2="2"/><line x1="18" y1="6" x2="14" y2="6"/></svg>Plan</button>
     <button class="nbt" data-v="profile"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>Profile</button>
   </nav>
 </div>
@@ -419,9 +463,13 @@ function showView(v){
   if(v==='tools')   initTools();
 }
 document.querySelectorAll('.nbt').forEach(function(btn){
-  btn.addEventListener('click', function(){ showView(this.dataset.v); });
+  btn.addEventListener('click', function(){
+    if (this.dataset.v === 'plan') { window.location.href = 'planner.html'; return; }
+    showView(this.dataset.v);
+  });
 });
 ge('btn-avatar').addEventListener('click', function(){ showView('profile'); });
+ge('logo-home').addEventListener('click', function(){ showView('home'); });
 
 // ─── MODALS ──────────────────────────────────────────────────
 function openModal(id){ ge(id).classList.remove('hidden'); }
@@ -699,11 +747,58 @@ function renderHistory(){
 }
 
 // ─── TOOLS ───────────────────────────────────────────────────
-var panels = ['p-import','p-exinfo','p-ai'];
+var panels = ['p-import','p-exinfo','p-overload','p-ai'];
 function initTools(){
   var k=localStorage.getItem('ru3-api-key');
   if(k){ge('ai-key').value=k;ge('key-msg').textContent='✓ Key saved';ge('key-msg').style.color='var(--green)';}
 }
+
+/* ── Overload preview in Tools panel ── */
+function renderOverloadPreview(){
+  var cont = ge('overload-preview'); if(!cont) return;
+  var map = {};
+  S.log.slice().reverse().forEach(function(entry){
+    (entry.exercises||[]).forEach(function(e){
+      if(!e.name) return;
+      var key = e.name.trim().toLowerCase();
+      if(!map[key]) map[key]={name:e.name.trim(),sessions:[]};
+      var w=parseFloat(String(e.weight||'').replace(/[^0-9.]/g,''))||0;
+      var r=parseInt(String(e.reps||'').replace(/[^0-9]/g,''))||0;
+      var s=parseInt(String(e.sets||'').replace(/[^0-9]/g,''))||1;
+      map[key].sessions.push({score:w>0?w*r*s:r*s,weight:e.weight,reps:e.reps,sets:e.sets});
+    });
+  });
+  var alerts=[];
+  Object.values(map).forEach(function(ex){
+    if(ex.sessions.length<3) return;
+    var last=ex.sessions.length-1;
+    var ref=ex.sessions[last].score, streak=1;
+    for(var i=last-1;i>=0;i--){ if(ex.sessions[i].score>=ref){streak++;ref=ex.sessions[i].score;}else break; }
+    if(streak>=3) alerts.push({name:ex.name,streak:streak,level:streak>=7?'critical':streak>=5?'danger':'warn',weight:ex.sessions[last].weight,reps:ex.sessions[last].reps,sets:ex.sessions[last].sets});
+  });
+  alerts.sort(function(a,b){var o={critical:0,danger:1,warn:2};return(o[a.level]-o[b.level])||b.streak-a.streak;});
+  if(!alerts.length){
+    cont.innerHTML='<div style="text-align:center;padding:20px;color:var(--muted);font-size:.8rem">No alerts yet — keep logging!</div>';
+    return;
+  }
+  var colors={critical:'#FF00AA',danger:'#FF6B35',warn:'#F5FF00'};
+  cont.innerHTML='<div style="font-size:.65rem;font-weight:800;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);margin-bottom:8px">Top Alerts</div>'+
+    alerts.slice(0,3).map(function(a){
+      return '<div style="background:var(--card);border:1px solid var(--border);border-left:3px solid '+colors[a.level]+';border-radius:var(--r-sm);padding:10px 13px;margin-bottom:7px;display:flex;align-items:center;gap:10px">'+
+        '<div style="flex:1"><div style="font-size:.85rem;font-weight:800">'+esc(a.name)+'</div>'+
+        '<div style="font-size:.72rem;color:var(--muted);margin-top:2px">'+esc(a.sets)+'×'+esc(a.reps)+'  @  '+esc(a.weight)+'</div></div>'+
+        '<div style="font-size:.65rem;font-weight:800;color:'+colors[a.level]+';white-space:nowrap">'+a.streak+' sessions</div>'+
+      '</div>';
+    }).join('')+
+    (alerts.length>3?'<div style="text-align:center;font-size:.74rem;color:var(--muted);padding:4px 0">+'+( alerts.length-3)+' more — open dashboard</div>':'');
+}
+
+document.querySelectorAll('.stab').forEach(function(btn){
+  /* re-render overload preview when that tab is selected */
+  if(btn.dataset.panel==='p-overload'){
+    btn.addEventListener('click',function(){ setTimeout(renderOverloadPreview,0); });
+  }
+});
 document.querySelectorAll('.stab').forEach(function(btn){
   btn.addEventListener('click',function(){
     document.querySelectorAll('.stab').forEach(function(b){b.classList.remove('on');});
@@ -886,8 +981,117 @@ function parseWorkoutText(text){
   return days.filter(function(d){return d.exercises.length>0;});
 }
 
+// ─── ACCOUNT ─────────────────────────────────────────────────
+var AK2 = 'ru3-accounts', SIK = 'ru3-signed-in';
+var acctTab = 'in';
+
+function getAccounts(){ return JSON.parse(localStorage.getItem(AK2)||'[]'); }
+function saveAccounts(a){ localStorage.setItem(AK2, JSON.stringify(a)); }
+function getSignedIn(){ return localStorage.getItem(SIK)||''; }
+function setSignedIn(e){ if(e) localStorage.setItem(SIK,e); else localStorage.removeItem(SIK); }
+
+async function pwHash(email, pw){
+  var str = email.toLowerCase()+'||repup||'+pw;
+  var buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
+  return Array.from(new Uint8Array(buf)).map(function(b){return b.toString(16).padStart(2,'0');}).join('');
+}
+
+function renderAccount(){
+  var el = ge('acct-section'); if(!el) return;
+  var email = getSignedIn();
+  if(email){
+    el.innerHTML =
+      '<div class="acct-card">'+
+        '<div class="acct-bar"></div>'+
+        '<div class="acct-body">'+
+          '<div class="acct-signed">'+
+            '<div class="acct-avatar">'+esc(email.charAt(0).toUpperCase())+'</div>'+
+            '<div class="acct-info-col">'+
+              '<div class="acct-email">'+esc(email)+'</div>'+
+              '<div class="acct-status">✓ Signed In</div>'+
+            '</div>'+
+            '<button class="btn btn-g btn-sm" id="btn-acct-out">Sign Out</button>'+
+          '</div>'+
+        '</div>'+
+      '</div>';
+    ge('btn-acct-out').addEventListener('click', function(){
+      setSignedIn(''); updateAvatar(); renderAccount();
+    });
+  } else {
+    var isUp = acctTab === 'up';
+    el.innerHTML =
+      '<div class="acct-card">'+
+        '<div class="acct-bar"></div>'+
+        '<div class="acct-body">'+
+          '<div class="acct-title">Account</div>'+
+          '<div class="acct-sub">Sign in or create a free account to save your progress.</div>'+
+          '<div class="acct-tabs">'+
+            '<button class="acct-tab'+(!isUp?' on':'')+'" id="atab-in">Sign In</button>'+
+            '<button class="acct-tab'+(isUp?' on':'')+'" id="atab-up">Create Account</button>'+
+          '</div>'+
+          '<div class="fg"><label>Email</label>'+
+            '<input type="email" id="acct-email" placeholder="you@example.com" autocapitalize="none" autocorrect="off" autocomplete="email"/>'+
+          '</div>'+
+          '<div class="fg"><label>Password</label>'+
+            '<input type="password" id="acct-pass" placeholder="Min. 6 characters" autocomplete="'+(isUp?'new':'current')+'-password"/>'+
+          '</div>'+
+          (isUp?'<div class="fg"><label>Confirm Password</label><input type="password" id="acct-pass2" placeholder="Repeat your password" autocomplete="new-password"/></div>':'')+
+          '<div class="acct-msg" id="acct-msg"></div>'+
+          '<button class="btn btn-o" style="width:100%" id="btn-acct-go">'+(isUp?'Create Account →':'Sign In →')+'</button>'+
+        '</div>'+
+      '</div>';
+
+    ge('atab-in').addEventListener('click', function(){ acctTab='in'; renderAccount(); });
+    ge('atab-up').addEventListener('click', function(){ acctTab='up'; renderAccount(); });
+
+    ['acct-email','acct-pass','acct-pass2'].forEach(function(id){
+      var inp = ge(id); if(!inp) return;
+      inp.addEventListener('keydown', function(e){ if(e.key==='Enter'){ e.preventDefault(); ge('btn-acct-go').click(); } });
+    });
+
+    ge('btn-acct-go').addEventListener('click', async function(){
+      var emailVal = (ge('acct-email').value||'').trim().toLowerCase();
+      var passVal  = ge('acct-pass').value||'';
+      var msgEl    = ge('acct-msg');
+      var setMsg   = function(m, ok){ msgEl.textContent=m; msgEl.style.color=ok?'var(--green)':'var(--red)'; };
+
+      if(!emailVal){ setMsg('✗ Email is required.'); ge('acct-email').focus(); return; }
+      if(!emailVal.includes('@')){ setMsg('✗ Enter a valid email address.'); return; }
+      if(passVal.length < 6){ setMsg('✗ Password must be at least 6 characters.'); return; }
+
+      var btn = ge('btn-acct-go');
+      btn.disabled = true; btn.textContent = '…';
+      var accounts = getAccounts();
+      var hash;
+      try { hash = await pwHash(emailVal, passVal); }
+      catch(e){ setMsg('✗ Error — try reloading the page.'); btn.disabled=false; btn.textContent=isUp?'Create Account →':'Sign In →'; return; }
+
+      if(isUp){
+        var p2 = ge('acct-pass2') ? ge('acct-pass2').value : '';
+        if(passVal !== p2){ setMsg('✗ Passwords do not match.'); btn.disabled=false; btn.textContent='Create Account →'; return; }
+        if(accounts.find(function(a){return a.email===emailVal;})){
+          setMsg('✗ An account already exists with this email.'); btn.disabled=false; btn.textContent='Create Account →'; return;
+        }
+        accounts.push({email:emailVal, hash:hash, created:new Date().toISOString()});
+        saveAccounts(accounts);
+        setSignedIn(emailVal);
+        setMsg('✓ Account created! Welcome.', true);
+        setTimeout(function(){ updateAvatar(); renderAccount(); }, 700);
+      } else {
+        var found = accounts.find(function(a){return a.email===emailVal;});
+        if(!found){ setMsg('✗ No account found for this email. Create one?'); btn.disabled=false; btn.textContent='Sign In →'; return; }
+        if(found.hash !== hash){ setMsg('✗ Incorrect password.'); btn.disabled=false; btn.textContent='Sign In →'; return; }
+        setSignedIn(emailVal);
+        setMsg('✓ Signed in!', true);
+        setTimeout(function(){ updateAvatar(); renderAccount(); }, 500);
+      }
+    });
+  }
+}
+
 // ─── PROFILE ─────────────────────────────────────────────────
 function renderProfile(){
+  renderAccount();
   var ps=getProfs();
   ge('phero').innerHTML=
     '<div class="pav">'+esc(profile.charAt(0).toUpperCase())+'</div>'+
@@ -919,10 +1123,19 @@ ge('btn-add-profile').addEventListener('click',function(){
   var ps=getProfs(); if(ps.includes(name)){alert('Name already exists.');return;}
   ps.push(name); saveProfs(ps); ge('inp-pname').value=''; switchProfile(name);
 });
-function updateAvatar(){ ge('btn-avatar').textContent=profile.charAt(0).toUpperCase(); }
+function updateAvatar(){
+  var email = getSignedIn();
+  ge('btn-avatar').textContent = (email ? email : profile).charAt(0).toUpperCase();
+}
 
 // ─── PWA ─────────────────────────────────────────────────────
-if('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(function(){});
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('./sw.js').catch(function(){});
+  /* Auto-reload when a new service worker takes control so fresh HTML/CSS loads */
+  navigator.serviceWorker.addEventListener('controllerchange', function() {
+    window.location.reload();
+  });
+}
 
 // ─── INIT ────────────────────────────────────────────────────
 updateAvatar();
